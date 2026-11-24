@@ -1,0 +1,99 @@
+@model List<DC_BOUTIQUE.Core.Application.ViewModels.Categorias.CategoriaViewModel>
+@{
+    ViewData["Title"] = "Gestión de Categorías";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1" style="font-family:'Cormorant Garamond', serif;font-size:28px;">Categorías de Ropa & Accesorios</h1>
+        <p class="text-muted mb-0 small">Organización del catálogo para vestidos, blusas, calzado y complementos.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-dc-gold shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i> Nueva Categoría
+    </a>
+</div>
+
+<div class="dc-card">
+    <div class="table-responsive">
+        <table class="table-dc">
+            <thead>
+                <tr>
+                    <th>Nombre de Categoría</th>
+                    <th>Descripción</th>
+                    <th class="text-center">Productos</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold">@item.Nombre</td>
+                            <td class="text-muted">@(string.IsNullOrWhiteSpace(item.Descripcion) ? "Sin descripción" : item.Descripcion)</td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border">@item.CantidadProductos prendas</span>
+                            </td>
+                            <td>
+                                @if (item.Activo)
+                                {
+                                    <span class="badge bg-success-subtle text-success">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-subtle text-danger">Inactivo</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark me-1" title="Editar">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline delete-form">
+                                    @Html.AntiForgeryToken()
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-confirm-delete" data-name="@item.Nombre" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            No hay categorías registradas en el catálogo.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-confirm-delete').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const name = this.getAttribute('data-name');
+                const form = this.closest('form');
+                Swal.fire({
+                    title: '¿Eliminar categoría?',
+                    text: `Se deshabilitará la categoría "${name}".`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1A1816',
+                    cancelButtonColor: '#716C66',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,120 @@
+@model List<DC_BOUTIQUE.Core.Application.ViewModels.Usuarios.UsuarioViewModel>
+@{
+    ViewData["Title"] = "Usuarios & Empleados";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1" style="font-family:'Cormorant Garamond', serif;font-size:28px;">Usuarios & Empleados</h1>
+        <p class="text-muted mb-0 small">Administración de accesos al sistema, roles (Administrador / Vendedor) y comisiones.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-dc-gold shadow-sm">
+        <i class="bi bi-person-plus-fill me-1"></i> Nuevo Usuario
+    </a>
+</div>
+
+<div class="dc-card">
+    <div class="table-responsive">
+        <table class="table-dc">
+            <thead>
+                <tr>
+                    <th>Nombre Completo</th>
+                    <th>Usuario (Login)</th>
+                    <th>Rol</th>
+                    <th>Cédula</th>
+                    <th>Teléfono</th>
+                    <th class="text-center">Comisión</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var u in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold">@u.NombreCompleto</div>
+                                <small class="text-muted">ID: @u.Id.ToString()[..8]...</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border font-monospace">@u.NombreUsuario</span>
+                            </td>
+                            <td>
+                                @if (u.Rol == DC_BOUTIQUE.Core.Domain.Common.Enums.RolUsuario.Administrador)
+                                {
+                                    <span class="badge bg-dark"><i class="bi bi-shield-check text-warning me-1"></i> Administrador</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary"><i class="bi bi-person-badge me-1"></i> Vendedor / Cajera</span>
+                                }
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(u.Cedula) ? "-" : u.Cedula)</td>
+                            <td>@(string.IsNullOrWhiteSpace(u.Telefono) ? "-" : u.Telefono)</td>
+                            <td class="text-center">
+                                <span class="badge bg-primary-subtle text-primary">@u.PorcentajeComision%</span>
+                            </td>
+                            <td>
+                                @if (u.Activo)
+                                {
+                                    <span class="badge bg-success-subtle text-success">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-subtle text-danger">Inactivo</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-dark me-1" title="Editar">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                @if (u.NombreUsuario != "admin")
+                                {
+                                    <form asp-action="Delete" asp-route-id="@u.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-confirm-delete" data-name="@u.NombreCompleto" title="Deshabilitar">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            No hay usuarios registrados.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-confirm-delete').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const name = this.getAttribute('data-name');
+                const form = this.closest('form');
+                Swal.fire({
+                    title: '¿Deshabilitar usuario?',
+                    text: `Se retirará el acceso a "${name}".`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1A1816',
+                    cancelButtonColor: '#716C66',
+                    confirmButtonText: 'Sí, deshabilitar',
+                    cancelButtonText: 'Cancelar'
+                }).then((r) => {
+                    if (r.isConfirmed) form.submit();
+                });
+            });
+        });
+    </script>
+}

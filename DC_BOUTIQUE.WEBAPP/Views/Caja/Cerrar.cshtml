@@ -1,0 +1,112 @@
+@model DC_BOUTIQUE.Core.Application.ViewModels.Caja.CerrarTurnoViewModel
+@{
+    ViewData["Title"] = "Cierre y Arqueo de Caja";
+    var turno = ViewBag.Turno as DC_BOUTIQUE.Core.Application.ViewModels.Caja.TurnoCajaViewModel;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-7">
+        <div class="dc-card">
+            <div class="dc-card-header">
+                <div>
+                    <h4 class="dc-card-title">Cuadre & Cierre de Caja</h4>
+                    <p class="text-muted small mb-0">Turno: <strong>@turno?.CodigoTurno</strong> · Apertura: @turno?.FechaApertura.ToString("dd/MM/yyyy hh:mm tt")</p>
+                </div>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Cancelar</a>
+            </div>
+
+            <!-- Resumen de cálculos -->
+            <div class="bg-light p-3 rounded mb-4 border">
+                <div class="row g-2 small">
+                    <div class="col-6">Fondo Inicial:</div>
+                    <div class="col-6 text-end fw-bold">RD$ @(turno?.FondoInicialEfectivo.ToString("N2"))</div>
+
+                    <div class="col-6">Ventas en Efectivo:</div>
+                    <div class="col-6 text-end fw-bold text-success">+ RD$ @(turno?.TotalVentasEfectivo.ToString("N2"))</div>
+
+                    <div class="col-6">Gastos en Efectivo:</div>
+                    <div class="col-6 text-end fw-bold text-danger">- RD$ @(turno?.TotalGastosEfectivo.ToString("N2"))</div>
+
+                    <div class="col-12"><hr class="my-1"></div>
+
+                    <div class="col-6 fs-6 fw-bold">Efectivo Esperado en Cajón:</div>
+                    <div class="col-6 text-end fs-5 fw-bold text-dark" id="txtEsperado" data-esperado="@(turno?.EfectivoEsperadoEnCaja ?? 0)">
+                        RD$ @(turno?.EfectivoEsperadoEnCaja.ToString("N2"))
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="Cerrar" method="post" id="formCerrar">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="TurnoId" />
+
+                <div class="mb-4">
+                    <label asp-for="EfectivoContadoAlCierre" class="form-label fw-bold small text-uppercase">
+                        Efectivo Físico Contado en el Cajón (RD$) *
+                    </label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white fw-bold">RD$</span>
+                        <input asp-for="EfectivoContadoAlCierre" id="inputContado" type="number" step="0.01" class="form-control fw-bold fs-4" autofocus />
+                    </div>
+                    <span asp-validation-for="EfectivoContadoAlCierre" class="text-danger small"></span>
+                </div>
+
+                <!-- Indicador de Diferencia Dinámico -->
+                <div id="boxDiferencia" class="alert alert-secondary text-center py-3 mb-4">
+                    <div class="small text-uppercase fw-bold text-muted mb-1">Diferencia de Arqueo</div>
+                    <h3 id="txtDiferencia" class="fw-bold mb-0">RD$ 0.00</h3>
+                    <div id="lblEstadoDiferencia" class="small fw-semibold mt-1">Caja Cuadrada</div>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Observaciones" class="form-label fw-bold small text-uppercase">Observaciones de Cierre (Opcional)</label>
+                    <textarea asp-for="Observaciones" rows="2" class="form-control" placeholder="Justificación en caso de sobrante o faltante..."></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-dark">Volver</a>
+                    <button type="submit" class="btn btn-danger px-4 py-2 fs-6">
+                        <i class="bi bi-lock-fill me-1"></i> Cerrar Turno e Imprimir Acta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const inputContado = document.getElementById('inputContado');
+        const txtEsperado = parseFloat(document.getElementById('txtEsperado').getAttribute('data-esperado')) || 0;
+        const txtDiferencia = document.getElementById('txtDiferencia');
+        const lblEstado = document.getElementById('lblEstadoDiferencia');
+        const boxDiferencia = document.getElementById('boxDiferencia');
+
+        function calcularDiferencia() {
+            const contado = parseFloat(inputContado.value) || 0;
+            const diff = contado - txtEsperado;
+
+            txtDiferencia.textContent = `RD$ ${Math.abs(diff).toLocaleString('es-DO', { minimumFractionDigits: 2 })}`;
+
+            boxDiferencia.classList.remove('alert-secondary', 'alert-success', 'alert-danger', 'alert-warning');
+
+            if (Math.abs(diff) < 0.01) {
+                boxDiferencia.classList.add('alert-success');
+                lblEstado.textContent = '✓ Caja Perfectamente Cuadrada';
+                lblEstado.className = 'small fw-bold text-success mt-1';
+            } else if (diff > 0) {
+                boxDiferencia.classList.add('alert-warning');
+                lblEstado.textContent = '▲ Sobrante de Efectivo en Caja';
+                lblEstado.className = 'small fw-bold text-warning mt-1';
+            } else {
+                boxDiferencia.classList.add('alert-danger');
+                lblEstado.textContent = '▼ Faltante de Efectivo en Caja';
+                lblEstado.className = 'small fw-bold text-danger mt-1';
+            }
+        }
+
+        inputContado.addEventListener('input', calcularDiferencia);
+        calcularDiferencia();
+    </script>
+}

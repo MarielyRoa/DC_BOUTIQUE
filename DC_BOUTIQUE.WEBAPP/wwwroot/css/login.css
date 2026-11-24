@@ -1,0 +1,804 @@
+/* ==========================================================================
+   DAHIANA CORPORAN BOUTIQUE — DESKTOP POS & ERP SYSTEM LOGIN
+   Architectural Luxury Design inspired by the Boutique Interior
+   ========================================================================== */
+
+:root {
+    /* Paleta extraída del interior de Dahiana Corporan Boutique */
+    --dc-obsidian: #12100E;
+    --dc-espresso: #1C1815;
+    --dc-charcoal: #2A2420;
+    --dc-fluted-wood: #171412;
+
+    /* Tonos Mármol Travertino / Crema Cálido */
+    --dc-marble-light: #FAF7F2;
+    --dc-marble-base: #F3EDE4;
+    --dc-marble-warm: #E6DDD0;
+    --dc-stone-border: #D9CCBA;
+
+    /* Iluminación LED Cálida / Champagne Gold */
+    --dc-gold-primary: #C5A059;
+    --dc-gold-light: #E2C792;
+    --dc-gold-dark: #9A7738;
+    --dc-led-glow: rgba(212, 175, 106, 0.32);
+    --dc-led-line: #DFC18D;
+
+    /* Textos y Estados */
+    --dc-text-primary: #181512;
+    --dc-text-secondary: #5C5349;
+    --dc-text-muted: #8C8073;
+    --dc-surface-card: rgba(255, 252, 248, 0.88);
+    --dc-input-bg: #FFFFFF;
+    --dc-danger: #B83A3A;
+    --dc-success: #3B7A57;
+
+    /* Tipografías */
+    --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-script: 'Great Vibes', 'Alex Brush', cursive;
+}
+
+/* Tema Oscuro Opcional ("Modo Obsidiana") */
+body.theme-obsidian {
+    --dc-marble-light: #161311;
+    --dc-marble-base: #12100E;
+    --dc-marble-warm: #1F1B17;
+    --dc-stone-border: #332C25;
+    --dc-text-primary: #F5EFE6;
+    --dc-text-secondary: #B8ACA0;
+    --dc-text-muted: #7D7165;
+    --dc-surface-card: rgba(28, 24, 21, 0.92);
+    --dc-input-bg: #1D1916;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: var(--font-sans);
+    background-color: var(--dc-obsidian);
+    color: var(--dc-text-primary);
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+}
+
+/* ==========================================================================
+   CONTENEDOR PRINCIPAL DE ESCRITORIO (SPLIT-SCREEN 100VH)
+   ========================================================================== */
+.dc-desktop-shell {
+    display: grid;
+    grid-template-columns: 1.18fr 22px 0.82fr;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   PANEL IZQUIERDO: VITRINA ARQUITECTÓNICA DE LA BOUTIQUE
+   ========================================================================== */
+.dc-showcase-panel {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2.25rem 2.75rem;
+    color: #FAF7F2;
+    background-color: var(--dc-obsidian);
+}
+
+.dc-showcase-bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('../images/boutique-bg.jpg');
+    background-size: cover;
+    background-position: center 45%;
+    transform: scale(1.03);
+    animation: dcAmbientZoom 28s ease-in-out infinite alternate;
+    filter: brightness(0.92) contrast(1.04);
+    z-index: 1;
+}
+
+@keyframes dcAmbientZoom {
+    0% {
+        transform: scale(1.02) translate(0, 0);
+    }
+    100% {
+        transform: scale(1.09) translate(-1%, -1%);
+    }
+}
+
+.dc-showcase-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg,
+            rgba(18, 16, 14, 0.72) 0%,
+            rgba(18, 16, 14, 0.18) 35%,
+            rgba(18, 16, 14, 0.25) 62%,
+            rgba(18, 16, 14, 0.88) 100%),
+        radial-gradient(circle at 75% 35%, rgba(226, 199, 146, 0.14), transparent 55%);
+    z-index: 2;
+}
+
+/* Barra superior de estado del sistema de escritorio */
+.dc-showcase-topbar {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.dc-terminal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.48rem 1rem;
+    border-radius: 999px;
+    background: rgba(18, 16, 14, 0.68);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(226, 199, 146, 0.32);
+    font-size: 0.73rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #F5EFE6;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.dc-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #52C478;
+    box-shadow: 0 0 10px #52C478;
+    animation: dcPulse 2.4s infinite;
+}
+
+@keyframes dcPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.88); }
+}
+
+.dc-clock-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.48rem 1.1rem;
+    border-radius: 999px;
+    background: rgba(18, 16, 14, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font-size: 0.78rem;
+    color: #EFE8DF;
+    letter-spacing: 0.04em;
+}
+
+.dc-clock-time {
+    font-weight: 600;
+    color: var(--dc-gold-light);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Tarjeta inferior con el lema de la pared de la boutique */
+.dc-showcase-footer {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.dc-quote-card {
+    background: rgba(20, 17, 15, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(226, 199, 146, 0.28);
+    border-left: 3px solid var(--dc-gold-primary);
+    border-radius: 16px;
+    padding: 1.35rem 1.75rem;
+    max-width: 440px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.42);
+}
+
+.dc-quote-script {
+    font-family: var(--font-script);
+    font-size: 2.05rem;
+    line-height: 1.15;
+    color: var(--dc-gold-light);
+    margin-bottom: 0.45rem;
+    text-shadow: 0 2px 12px rgba(212, 175, 106, 0.35);
+}
+
+.dc-quote-sub {
+    font-size: 0.78rem;
+    color: rgba(245, 239, 230, 0.82);
+    letter-spacing: 0.06em;
+    line-height: 1.55;
+}
+
+.dc-architecture-tag {
+    text-align: right;
+    background: rgba(18, 16, 14, 0.58);
+    backdrop-filter: blur(12px);
+    padding: 0.85rem 1.15rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dc-architecture-tag span {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--dc-gold-light);
+    margin-bottom: 0.2rem;
+}
+
+.dc-architecture-tag strong {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: #FFFFFF;
+    letter-spacing: 0.08em;
+}
+
+/* ==========================================================================
+   DIVISOR ARQUITECTÓNICO: LISTONES DE MADERA NEGRA + LUZ LED CÁLIDA
+   (Inspirado directamente en el panel detrás del mostrador de la foto)
+   ========================================================================== */
+.dc-fluted-divider {
+    position: relative;
+    height: 100%;
+    width: 22px;
+    background: repeating-linear-gradient(
+        90deg,
+        #0D0B0A 0px,
+        #0D0B0A 3px,
+        #231F1B 3px,
+        #231F1B 5.5px
+    );
+    box-shadow:
+        -6px 0 20px rgba(0, 0, 0, 0.65),
+        4px 0 22px var(--dc-led-glow);
+    z-index: 10;
+}
+
+/* Línea de luz LED cálida empotrada */
+.dc-fluted-divider::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -2px;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(
+        180deg,
+        rgba(223, 193, 141, 0.35) 0%,
+        rgba(243, 216, 166, 0.95) 25%,
+        rgba(255, 236, 199, 1) 50%,
+        rgba(243, 216, 166, 0.95) 75%,
+        rgba(223, 193, 141, 0.35) 100%
+    );
+    box-shadow:
+        0 0 12px rgba(226, 199, 146, 0.85),
+        0 0 28px rgba(212, 175, 106, 0.55);
+}
+
+/* ==========================================================================
+   PANEL DERECHO: AUTENTICACIÓN DEL SISTEMA (TEXTURA MÁRMOL TRAVERTINO)
+   ========================================================================== */
+.dc-auth-panel {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    background:
+        radial-gradient(circle at 0% 50%, rgba(226, 199, 146, 0.16), transparent 55%),
+        radial-gradient(circle at 90% 10%, rgba(197, 160, 89, 0.10), transparent 45%),
+        linear-gradient(145deg, var(--dc-marble-light) 0%, var(--dc-marble-base) 55%, var(--dc-marble-warm) 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.75rem 3.25rem;
+    overflow-y: auto;
+    transition: background 0.35s ease, color 0.35s ease;
+}
+
+/* Controles de ventana / Tema en la esquina superior derecha */
+.dc-auth-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.dc-edition-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dc-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.dc-edition-tag::before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 1px;
+    background-color: var(--dc-gold-primary);
+}
+
+.dc-window-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dc-icon-btn {
+    background: var(--dc-surface-card);
+    border: 1px solid var(--dc-stone-border);
+    color: var(--dc-text-secondary);
+    height: 34px;
+    padding: 0 0.75rem;
+    border-radius: 999px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dc-icon-btn:hover {
+    border-color: var(--dc-gold-primary);
+    color: var(--dc-text-primary);
+    box-shadow: 0 4px 12px rgba(197, 160, 89, 0.18);
+}
+
+/* ==========================================================================
+   CUERPO CENTRAL DEL LOGIN Y MONOGRAMA "DC" CON CORONA
+   ========================================================================== */
+.dc-auth-body {
+    width: 100%;
+    max-width: 410px;
+    margin: auto;
+    padding: 0.5rem 0;
+}
+
+.dc-brand-header {
+    text-align: center;
+    margin-bottom: 1.65rem;
+}
+
+.dc-monogram-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.55rem;
+    filter: drop-shadow(0 6px 16px rgba(197, 160, 89, 0.22));
+}
+
+.dc-monogram-svg {
+    width: 96px;
+    height: 92px;
+    color: var(--dc-text-primary);
+    transition: transform 0.35s ease, color 0.35s ease;
+}
+
+.dc-monogram-wrapper:hover .dc-monogram-svg {
+    transform: translateY(-2px);
+}
+
+.dc-brand-title {
+    font-family: var(--font-serif);
+    font-size: 1.62rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dc-text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.dc-brand-subtitle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    font-size: 0.74rem;
+    font-weight: 500;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--dc-text-secondary);
+}
+
+.dc-brand-subtitle::before,
+.dc-brand-subtitle::after {
+    content: '';
+    width: 36px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--dc-gold-primary), transparent);
+}
+
+/* Selector de Módulo de Acceso (POS / Administración / Inventario) */
+.dc-module-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+    background: var(--dc-surface-card);
+    padding: 0.32rem;
+    border-radius: 12px;
+    border: 1px solid var(--dc-stone-border);
+    margin-bottom: 1.4rem;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.dc-module-pill {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0.52rem 0.4rem;
+    border-radius: 9px;
+    font-family: var(--font-sans);
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: var(--dc-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.38rem;
+    transition: all 0.22s ease;
+}
+
+.dc-module-pill svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0.75;
+}
+
+.dc-module-pill.active {
+    background: var(--dc-obsidian);
+    color: #FAF7F2;
+    box-shadow: 0 4px 12px rgba(18, 16, 14, 0.22);
+}
+
+body.theme-obsidian .dc-module-pill.active {
+    background: var(--dc-gold-primary);
+    color: #12100E;
+}
+
+.dc-module-pill.active svg {
+    opacity: 1;
+    color: var(--dc-gold-light);
+}
+
+body.theme-obsidian .dc-module-pill.active svg {
+    color: #12100E;
+}
+
+/* ==========================================================================
+   FORMULARIO DE ACCESO
+   ========================================================================== */
+.dc-form-group {
+    margin-bottom: 1.15rem;
+}
+
+.dc-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.42rem;
+}
+
+.dc-label {
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dc-text-secondary);
+}
+
+.dc-pin-trigger {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--dc-gold-dark);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: color 0.2s ease;
+}
+
+body.theme-obsidian .dc-pin-trigger {
+    color: var(--dc-gold-light);
+}
+
+.dc-pin-trigger:hover {
+    color: var(--dc-text-primary);
+    text-decoration: underline;
+}
+
+.dc-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.dc-input-icon {
+    position: absolute;
+    left: 1rem;
+    width: 18px;
+    height: 18px;
+    color: var(--dc-text-muted);
+    pointer-events: none;
+    transition: color 0.22s ease;
+}
+
+.dc-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 2.8rem 0 2.85rem;
+    background-color: var(--dc-input-bg);
+    border: 1.5px solid var(--dc-stone-border);
+    border-radius: 12px;
+    font-family: var(--font-sans);
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--dc-text-primary);
+    transition: all 0.22s ease;
+    box-shadow: 0 2px 6px rgba(18, 16, 14, 0.02);
+}
+
+.dc-input::placeholder {
+    color: var(--dc-text-muted);
+    font-weight: 400;
+}
+
+.dc-input:focus {
+    outline: none;
+    border-color: var(--dc-gold-primary);
+    box-shadow:
+        0 0 0 4px rgba(197, 160, 89, 0.16),
+        0 6px 16px rgba(197, 160, 89, 0.12);
+}
+
+.dc-input-wrapper:focus-within .dc-input-icon {
+    color: var(--dc-gold-primary);
+}
+
+.dc-password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--dc-text-muted);
+    cursor: pointer;
+    padding: 0.35rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.dc-password-toggle:hover {
+    color: var(--dc-text-primary);
+}
+
+.dc-validation-error {
+    display: block;
+    font-size: 0.74rem;
+    color: var(--dc-danger);
+    margin-top: 0.35rem;
+    font-weight: 500;
+}
+
+/* Teclado Numérico Rápido Desplegable (Para pantallas táctiles / POS) */
+.dc-numpad-drawer {
+    display: none;
+    background: var(--dc-surface-card);
+    border: 1px solid var(--dc-stone-border);
+    border-radius: 12px;
+    padding: 0.75rem;
+    margin-bottom: 1.1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    animation: dcFadeSlide 0.2s ease;
+}
+
+.dc-numpad-drawer.open {
+    display: block;
+}
+
+@keyframes dcFadeSlide {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dc-numpad-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+}
+
+.dc-numpad-key {
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--dc-stone-border);
+    background: var(--dc-input-bg);
+    color: var(--dc-text-primary);
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.dc-numpad-key:hover {
+    border-color: var(--dc-gold-primary);
+    background: rgba(197, 160, 89, 0.12);
+}
+
+.dc-numpad-key:active {
+    transform: scale(0.96);
+}
+
+/* Opciones de sesión */
+.dc-session-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.45rem;
+    font-size: 0.8rem;
+}
+
+.dc-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--dc-text-secondary);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.dc-checkbox {
+    accent-color: var(--dc-obsidian);
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+body.theme-obsidian .dc-checkbox {
+    accent-color: var(--dc-gold-primary);
+}
+
+/* Botón Principal de Acceso */
+.dc-submit-btn {
+    width: 100%;
+    height: 50px;
+    border: 1px solid rgba(226, 199, 146, 0.45);
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1E1A17 0%, #12100E 100%);
+    color: #FAF7F2;
+    font-family: var(--font-sans);
+    font-size: 0.83rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 10px 24px rgba(18, 16, 14, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transition: all 0.25s ease;
+}
+
+body.theme-obsidian .dc-submit-btn {
+    background: linear-gradient(135deg, #D4B06A 0%, #B38B45 100%);
+    color: #12100E;
+    border-color: #E8CFA0;
+    font-weight: 700;
+}
+
+.dc-submit-btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--dc-gold-primary);
+    box-shadow:
+        0 14px 28px rgba(18, 16, 14, 0.32),
+        0 0 18px rgba(197, 160, 89, 0.28);
+}
+
+.dc-submit-btn:active {
+    transform: translateY(0);
+}
+
+.dc-submit-arrow {
+    width: 17px;
+    height: 17px;
+    color: var(--dc-gold-light);
+    transition: transform 0.25s ease;
+}
+
+body.theme-obsidian .dc-submit-arrow {
+    color: #12100E;
+}
+
+.dc-submit-btn:hover .dc-submit-arrow {
+    transform: translateX(4px);
+}
+
+/* ==========================================================================
+   PIE DEL PANEL DE AUTENTICACIÓN (ESTADO DE CONEXIÓN / SUCURSAL)
+   ========================================================================== */
+.dc-auth-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 1px solid var(--dc-stone-border);
+    font-size: 0.72rem;
+    color: var(--dc-text-muted);
+}
+
+.dc-footer-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.dc-kbd {
+    display: inline-block;
+    padding: 0.12rem 0.42rem;
+    font-size: 0.66rem;
+    font-weight: 600;
+    border-radius: 5px;
+    background: var(--dc-surface-card);
+    border: 1px solid var(--dc-stone-border);
+    color: var(--dc-text-secondary);
+}
+
+/* ==========================================================================
+   RESPONSIVE FALLBACK PARA VENTANAS MÁS COMPACTAS
+   ========================================================================== */
+@media (max-width: 992px) {
+    .dc-desktop-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .dc-showcase-panel,
+    .dc-fluted-divider {
+        display: none;
+    }
+
+    .dc-auth-panel {
+        padding: 1.5rem 2rem;
+    }
+}

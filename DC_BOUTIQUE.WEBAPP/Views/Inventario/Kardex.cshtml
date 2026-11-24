@@ -1,0 +1,96 @@
+@model List<DC_BOUTIQUE.Core.Application.ViewModels.Inventario.MovimientoInventarioViewModel>
+@{
+    ViewData["Title"] = "Kardex de Movimientos";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1" style="font-family:'Cormorant Garamond', serif;font-size:28px;">Kardex / Movimientos de Inventario</h1>
+        <p class="text-muted mb-0 small">Auditoría completa de entradas, salidas por venta, mermas y ajustes de stock.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="EntradaRapida" class="btn btn-dc-gold shadow-sm">
+            <i class="bi bi-box-arrow-in-down me-1"></i> Entrada de Mercancía
+        </a>
+        <a asp-action="Ajuste" class="btn btn-outline-dark shadow-sm">
+            <i class="bi bi-sliders me-1"></i> Ajustar Stock
+        </a>
+    </div>
+</div>
+
+<div class="dc-card">
+    <div class="table-responsive">
+        <table class="table-dc">
+            <thead>
+                <tr>
+                    <th>Fecha & Hora</th>
+                    <th>Prenda / Talla / Color</th>
+                    <th>Tipo Movimiento</th>
+                    <th class="text-center">Cant.</th>
+                    <th class="text-center">Stock Antes</th>
+                    <th class="text-center">Stock Después</th>
+                    <th>Responsable</th>
+                    <th>Motivo / Ref.</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var m in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold">@m.FechaCreacion.ToString("dd/MM/yyyy")</div>
+                                <small class="text-muted">@m.FechaCreacion.ToString("hh:mm tt")</small>
+                            </td>
+                            <td>
+                                <div class="fw-bold">@m.NombreProducto</div>
+                                <small class="text-muted">SKU: @m.Sku · Talla: <strong>@m.Talla</strong> · Color: <strong>@m.Color</strong></small>
+                            </td>
+                            <td>
+                                @if (m.TipoMovimiento == DC_BOUTIQUE.Core.Domain.Common.Enums.TipoMovimientoInventario.EntradaStock)
+                                {
+                                    <span class="badge bg-success-subtle text-success"><i class="bi bi-arrow-down-left"></i> Entrada Stock</span>
+                                }
+                                else if (m.TipoMovimiento == DC_BOUTIQUE.Core.Domain.Common.Enums.TipoMovimientoInventario.SalidaPorVenta)
+                                {
+                                    <span class="badge bg-primary-subtle text-primary"><i class="bi bi-bag-check"></i> Venta POS</span>
+                                }
+                                else if (m.TipoMovimiento == DC_BOUTIQUE.Core.Domain.Common.Enums.TipoMovimientoInventario.SalidaPorMermaODanio)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger"><i class="bi bi-exclamation-octagon"></i> Daño / Merma</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-subtle text-warning"><i class="bi bi-arrow-repeat"></i> Ajuste Conteo</span>
+                                }
+                            </td>
+                            <td class="text-center fw-bold fs-6 @(m.Cantidad > 0 ? "text-success" : "text-danger")">
+                                @(m.Cantidad > 0 ? $"+{m.Cantidad}" : m.Cantidad.ToString())
+                            </td>
+                            <td class="text-center text-muted">@m.StockAnterior</td>
+                            <td class="text-center fw-bold">@m.StockPosterior</td>
+                            <td>@m.NombreUsuario</td>
+                            <td>
+                                <div>@(string.IsNullOrWhiteSpace(m.Motivo) ? "-" : m.Motivo)</div>
+                                @if (!string.IsNullOrWhiteSpace(m.DocumentoReferencia))
+                                {
+                                    <span class="badge bg-light text-dark border">Ref: @m.DocumentoReferencia</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-arrow-left-right display-4 d-block mb-2 text-secondary"></i>
+                            No hay movimientos registrados en el kardex aún.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

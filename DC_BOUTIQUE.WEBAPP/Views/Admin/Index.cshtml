@@ -1,0 +1,176 @@
+@model DC_BOUTIQUE.Core.Application.ViewModels.Admin.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Panel de Control";
+}
+
+<!-- Encabezado de Página -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h1 class="h3 fw-bold mb-1" style="font-size:26px;">Resumen Administrativo</h1>
+        <p class="text-muted mb-0 small">Métricas en tiempo real, ventas de la boutique y alertas de existencias.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Pos" asp-action="Index" class="btn btn-dc-sky shadow-sm">
+            <i class="bi bi-cart4 me-1"></i> Ir al POS [F1]
+        </a>
+        <a asp-controller="Caja" asp-action="Index" class="btn btn-outline-sky shadow-sm">
+            <i class="bi bi-cash-stack me-1"></i> Arqueo de Caja [F2]
+        </a>
+    </div>
+</div>
+
+<!-- TARJETAS DE MÉTRICAS CLAVE (KPIs) -->
+<div class="row g-3 mb-4">
+    <!-- Ventas de Hoy -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="dc-card p-3 mb-0 h-100 border-start border-4 border-primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold">Ventas de Hoy</span>
+                    <h3 class="fw-bold my-1 text-dark">RD$ @Model.VentasHoy.ToString("N2")</h3>
+                    <span class="badge bg-light text-primary border">@Model.CantidadVentasHoy ventas</span>
+                </div>
+                <div class="p-3 bg-light rounded-circle text-primary fs-3">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventas del Mes -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="dc-card p-3 mb-0 h-100 border-start border-4 border-info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold">Acumulado Mes</span>
+                    <h3 class="fw-bold my-1 text-dark">RD$ @Model.VentasMes.ToString("N2")</h3>
+                    <span class="badge bg-info-subtle text-info">Mes en curso</span>
+                </div>
+                <div class="p-3 bg-light rounded-circle text-info fs-3">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado de Caja -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="dc-card p-3 mb-0 h-100 border-start border-4 @(Model.HayTurnoCajaAbierto ? "border-success" : "border-danger")">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold">Estado de Turno</span>
+                    <h4 class="fw-bold my-1 @(Model.HayTurnoCajaAbierto ? "text-success" : "text-danger")">
+                        @(Model.HayTurnoCajaAbierto ? "Caja Abierta" : "Caja Cerrada")
+                    </h4>
+                    <span class="small text-muted">@(Model.HayTurnoCajaAbierto ? $"Cajero: {Model.CajeroActual}" : "Sin turno activo")</span>
+                </div>
+                <div class="p-3 bg-light rounded-circle @(Model.HayTurnoCajaAbierto ? "text-success" : "text-danger") fs-3">
+                    <i class="bi @(Model.HayTurnoCajaAbierto ? "bi-unlock-fill" : "bi-lock-fill")"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas de Stock Bajo -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="dc-card p-3 mb-0 h-100 border-start border-4 @(Model.ProductosStockBajo > 0 ? "border-danger" : "border-success")">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold">Stock Crítico</span>
+                    <h3 class="fw-bold my-1 @(Model.ProductosStockBajo > 0 ? "text-danger" : "text-success")">@Model.ProductosStockBajo</h3>
+                    <span class="small text-muted">Prendas por agotarse</span>
+                </div>
+                <div class="p-3 bg-light rounded-circle @(Model.ProductosStockBajo > 0 ? "text-danger" : "text-success") fs-3">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- TABLA DE ÚLTIMAS VENTAS -->
+    <div class="col-12 col-lg-7">
+        <div class="dc-card h-100">
+            <div class="dc-card-header">
+                <h5 class="dc-card-title">Últimas Ventas Realizadas</h5>
+                <a asp-controller="Pos" asp-action="Ventas" class="btn btn-sm btn-outline-secondary">Ver Todas</a>
+            </div>
+            @if (Model.UltimasVentas.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table-dc">
+                        <thead>
+                            <tr>
+                                <th>Factura</th>
+                                <th>Cliente</th>
+                                <th>Pago</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var v in Model.UltimasVentas)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-primary">@v.NumeroFactura</div>
+                                        <div class="text-muted" style="font-size:11px;">@v.Fecha.ToString("dd/MM/yyyy hh:mm tt")</div>
+                                    </td>
+                                    <td>@v.Cliente</td>
+                                    <td><span class="badge bg-light text-dark border">@v.MetodosPago</span></td>
+                                    <td class="text-end fw-bold text-success">RD$ @v.Total.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-receipt display-4 d-block mb-2 text-secondary"></i>
+                    No se han registrado ventas el día de hoy.
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- PRENDAS CON STOCK BAJO (REORDEN) -->
+    <div class="col-12 col-lg-5">
+        <div class="dc-card h-100">
+            <div class="dc-card-header">
+                <h5 class="dc-card-title text-danger"><i class="bi bi-bell-fill me-1"></i> Reabastecer Prenda</h5>
+                <a asp-controller="Inventario" asp-action="EntradaRapida" class="btn btn-sm btn-dc-sky">Entrada Stock</a>
+            </div>
+            @if (Model.AlertasStock.Any())
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var item in Model.AlertasStock)
+                    {
+                        <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">@item.NombreProducto</div>
+                                <div class="text-muted" style="font-size:11px;">
+                                    SKU: <code>@item.Sku</code> · Talla: <strong>@item.Talla</strong> · Color: <strong>@item.Color</strong>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge @(item.StockActual == 0 ? "bg-danger" : "bg-warning text-dark") fs-6">
+                                    @item.StockActual disp.
+                                </span>
+                                <div class="text-muted" style="font-size:10px;">Mín: @item.StockMinimo</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-check-circle display-4 d-block mb-2 text-success"></i>
+                    ¡Inventario en orden! No hay prendas con existencia crítica.
+                </div>
+            }
+        </div>
+    </div>
+</div>

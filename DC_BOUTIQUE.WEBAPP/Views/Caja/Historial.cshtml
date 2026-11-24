@@ -1,0 +1,223 @@
+@model List<DC_BOUTIQUE.Core.Application.ViewModels.Caja.TurnoCajaViewModel>
+@{
+    ViewData["Title"] = "Historial de Cajas & Arqueos";
+    var fechaDesde = ViewBag.FechaDesde as string;
+    var fechaHasta = ViewBag.FechaHasta as string;
+    var turnos = Model ?? new();
+
+    var totalTurnos = turnos.Count;
+    var cerradosExactos = turnos.Count(t => t.Estado == DC_BOUTIQUE.Core.Domain.Common.Enums.EstadoCaja.CerradaCuadrada || (t.FechaCierre.HasValue && Math.Abs(t.DiferenciaArqueo ?? 0) < 0.01m));
+    var cerradosConDiferencia = turnos.Count(t => t.FechaCierre.HasValue && Math.Abs(t.DiferenciaArqueo ?? 0) >= 0.01m);
+    var abiertos = turnos.Count(t => t.Estado == DC_BOUTIQUE.Core.Domain.Common.Enums.EstadoCaja.Abierta || !t.FechaCierre.HasValue);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-primary border px-2 py-1"><i class="bi bi-clock-history"></i> AUDITORÍA</span>
+            <h1 class="h3 fw-bold mb-0 text-dark">Historial de Cajas & Arqueos</h1>
+        </div>
+        <p class="text-muted mb-0 small">Control de turnos, aperturas, cierres de cajón, responsable y análisis de diferencias (cuadre a lo justo, faltantes y sobrantes).</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-outline-sky shadow-sm">
+            <i class="bi bi-safe2 me-1"></i> Caja Actual / Arqueo en Vivo
+        </a>
+        <a asp-controller="Pos" asp-action="Index" class="btn btn-dc-sky shadow-sm">
+            <i class="bi bi-cart4 me-1"></i> Ir al POS [F1]
+        </a>
+    </div>
+</div>
+
+<!-- RESUMEN EN TARJETAS -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-3">
+        <div class="dc-card p-3 mb-0 h-100 border-start border-4 border-primary">
+            <span class="text-muted small text-uppercase fw-bold">Turnos Registrados</span>
+            <h3 class="fw-bold my-1 text-dark">@totalTurnos</h3>
+            <span class="small text-muted">Historial completo en sistema</span>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="dc-card p-3 mb-0 h-100 border-start border-4 border-success">
+            <span class="text-muted small text-uppercase fw-bold">Cuadres Exactos</span>
+            <h3 class="fw-bold my-1 text-success">@cerradosExactos</h3>
+            <span class="small text-success fw-semibold"><i class="bi bi-check2-circle"></i> A lo justo (Sin diferencia)</span>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="dc-card p-3 mb-0 h-100 border-start border-4 border-danger">
+            <span class="text-muted small text-uppercase fw-bold">Con Diferencia</span>
+            <h3 class="fw-bold my-1 text-danger">@cerradosConDiferencia</h3>
+            <span class="small text-danger fw-semibold"><i class="bi bi-exclamation-triangle"></i> Faltante o sobrante de dinero</span>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="dc-card p-3 mb-0 h-100 border-start border-4 border-info">
+            <span class="text-muted small text-uppercase fw-bold">Turnos Abiertos</span>
+            <h3 class="fw-bold my-1 text-info">@abiertos</h3>
+            <span class="small text-muted">Operando actualmente</span>
+        </div>
+    </div>
+</div>
+
+<!-- FILTRO POR FECHAS -->
+<div class="dc-card p-3 mb-4">
+    <form asp-action="Historial" method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label fw-bold small text-muted text-uppercase mb-1">Fecha Desde</label>
+            <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control form-control-sm" />
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label fw-bold small text-muted text-uppercase mb-1">Fecha Hasta</label>
+            <input type="date" name="fechaHasta" value="@fechaHasta" class="form-control form-control-sm" />
+        </div>
+        <div class="col-12 col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-dc-sky w-100">
+                <i class="bi bi-funnel me-1"></i> Filtrar Turnos
+            </button>
+            <a asp-action="Historial" class="btn btn-sm btn-outline-secondary w-50">
+                <i class="bi bi-arrow-counterclockwise"></i> Limpiar
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- TABLA PRINCIPAL DE AUDITORÍA DE TURNOS -->
+<div class="dc-card p-0 overflow-hidden">
+    @if (turnos.Any())
+    {
+        <div class="table-responsive">
+            <table class="table-dc mb-0">
+                <thead>
+                    <tr>
+                        <th>Turno</th>
+                        <th>Responsable</th>
+                        <th>Apertura</th>
+                        <th>Cierre</th>
+                        <th class="text-end">Fondo Inicial</th>
+                        <th class="text-end">Ventas Efectivo</th>
+                        <th class="text-end">Esperado</th>
+                        <th class="text-end">Contado Físico</th>
+                        <th>Diagnóstico de Cierre</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in turnos)
+                    {
+                        var esAbierto = t.Estado == DC_BOUTIQUE.Core.Domain.Common.Enums.EstadoCaja.Abierta || !t.FechaCierre.HasValue;
+                        var diferencia = t.DiferenciaArqueo ?? 0m;
+                        var esExacto = Math.Abs(diferencia) < 0.01m;
+                        var esFaltante = diferencia < -0.01m;
+                        var esSobrante = diferencia > 0.01m;
+
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark font-monospace" style="font-size:12.5px;">@t.CodigoTurno</div>
+                                @if (!string.IsNullOrWhiteSpace(t.Observaciones))
+                                {
+                                    <small class="text-muted text-truncate d-block" style="max-width:180px;" title="@t.Observaciones">
+                                        <i class="bi bi-chat-left-text me-1"></i>@t.Observaciones
+                                    </small>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">
+                                    <i class="bi bi-person-fill text-muted me-1"></i>@t.NombreUsuario
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark" style="font-size:12px;">@t.FechaApertura.ToString("dd/MM/yyyy")</div>
+                                <div class="text-muted" style="font-size:11px;">@t.FechaApertura.ToString("hh:mm:ss tt")</div>
+                            </td>
+                            <td>
+                                @if (esAbierto)
+                                {
+                                    <span class="badge bg-primary text-white" style="font-size:11px;">
+                                        <i class="bi bi-play-circle-fill me-1"></i> En Curso
+                                    </span>
+                                }
+                                else
+                                {
+                                    <div class="fw-semibold text-dark" style="font-size:12px;">@t.FechaCierre?.ToString("dd/MM/yyyy")</div>
+                                    <div class="text-muted" style="font-size:11px;">@t.FechaCierre?.ToString("hh:mm:ss tt")</div>
+                                }
+                            </td>
+                            <td class="text-end font-monospace">
+                                RD$ @t.FondoInicialEfectivo.ToString("N2")
+                            </td>
+                            <td class="text-end font-monospace text-success fw-semibold">
+                                + RD$ @t.TotalVentasEfectivo.ToString("N2")
+                            </td>
+                            <td class="text-end font-monospace fw-bold text-dark">
+                                RD$ @t.EfectivoEsperadoEnCaja.ToString("N2")
+                            </td>
+                            <td class="text-end font-monospace">
+                                @if (esAbierto)
+                                {
+                                    <span class="text-muted italic">Pendiente cierre</span>
+                                }
+                                else
+                                {
+                                    <span class="fw-bold text-dark">RD$ @((t.EfectivoContadoAlCierre ?? 0).ToString("N2"))</span>
+                                }
+                            </td>
+                            <td>
+                                @if (esAbierto)
+                                {
+                                    <span class="badge bg-light text-primary border" style="font-size:12px;">
+                                        <i class="bi bi-unlock-fill me-1"></i> Caja Abierta
+                                    </span>
+                                }
+                                else if (esExacto)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size:12px;" title="El efectivo contado coincidió al centavo con el cálculo del sistema">
+                                        <i class="bi bi-check-circle-fill me-1"></i> A lo justo (Exacto)
+                                    </span>
+                                }
+                                else if (esFaltante)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="font-size:12px;" title="Faltó dinero al cuadrar la caja">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Faltó: - RD$ @(Math.Abs(diferencia).ToString("N2"))
+                                    </span>
+                                }
+                                else if (esSobrante)
+                                {
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" style="font-size:12px;" title="Sobró dinero en el cajón respecto al cálculo del sistema">
+                                        <i class="bi bi-plus-circle-fill me-1"></i> Sobró: + RD$ @(diferencia.ToString("N2"))
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (!esAbierto)
+                                {
+                                    <a asp-action="ImprimirCierre" asp-route-id="@t.Id" target="_blank" class="btn btn-sm btn-outline-secondary p-1 px-2" title="Reimprimir Comprobante de Cierre">
+                                        <i class="bi bi-printer me-1"></i> Ticket
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-action="Cerrar" class="btn btn-sm btn-outline-danger p-1 px-2" title="Cerrar este turno ahora">
+                                        <i class="bi bi-lock-fill me-1"></i> Cuadrar
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-safe display-3 d-block mb-3 text-secondary opacity-50"></i>
+            <h5 class="fw-bold">No se encontraron turnos de caja registrados</h5>
+            <p class="small text-muted mb-3">Los turnos aparecerán aquí a medida que se abran y cierren cajas en el punto de venta.</p>
+            <a asp-action="Abrir" class="btn btn-sm btn-dc-sky">
+                <i class="bi bi-unlock-fill me-1"></i> Abrir Primer Turno
+            </a>
+        </div>
+    }
+</div>

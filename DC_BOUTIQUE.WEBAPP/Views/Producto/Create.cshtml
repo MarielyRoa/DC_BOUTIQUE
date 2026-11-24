@@ -1,0 +1,241 @@
+@model DC_BOUTIQUE.Core.Application.ViewModels.Productos.SaveProductoViewModel
+@{
+    ViewData["Title"] = "Nueva Prenda de Boutique";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1" style="font-family:'Cormorant Garamond', serif;font-size:28px;">Registrar Nueva Prenda</h1>
+        <p class="text-muted mb-0 small">Ingresa la información del modelo, precios, fotografía y variantes de talla/color.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Volver al Catálogo
+    </a>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-4">
+        <!-- COLUMNA IZQUIERDA: INFORMACIÓN GENERAL Y PRECIOS -->
+        <div class="col-12 col-lg-8">
+            <div class="dc-card">
+                <h5 class="dc-card-title mb-3">Información de la Prenda</h5>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-4">
+                        <label asp-for="CodigoModelo" class="form-label fw-bold small text-uppercase">Código / Modelo *</label>
+                        <input asp-for="CodigoModelo" class="form-control" />
+                        <span asp-validation-for="CodigoModelo" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <label asp-for="Nombre" class="form-label fw-bold small text-uppercase">Nombre de la Prenda *</label>
+                        <input asp-for="Nombre" class="form-control" placeholder="Ej. Vestido Midi Satín Champagne, Blusa Lino..." autofocus />
+                        <span asp-validation-for="Nombre" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-6">
+                        <label asp-for="CategoriaId" class="form-label fw-bold small text-uppercase">Categoría *</label>
+                        <select asp-for="CategoriaId" asp-items="ViewBag.Categorias" class="form-select">
+                            <option value="">-- Seleccionar Categoría --</option>
+                        </select>
+                        <span asp-validation-for="CategoriaId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label asp-for="Marca" class="form-label fw-bold small text-uppercase">Marca / Origen</label>
+                        <input asp-for="Marca" class="form-control" placeholder="Ej. Zara, Exclusiva..." />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label asp-for="MaterialPrincipal" class="form-label fw-bold small text-uppercase">Material / Tela</label>
+                        <input asp-for="MaterialPrincipal" class="form-control" placeholder="Ej. Satín, Seda..." />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Descripcion" class="form-label fw-bold small text-uppercase">Descripción / Detalles de Estilo</label>
+                    <textarea asp-for="Descripcion" rows="2" class="form-control" placeholder="Corte, detalles de confección, ocasiones recomendadas..."></textarea>
+                </div>
+            </div>
+
+            <!-- PRECIOS Y COSTOS -->
+            <div class="dc-card">
+                <h5 class="dc-card-title mb-3">Precios & Rentabilidad</h5>
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label asp-for="CostoBaseReferencia" class="form-label fw-bold small text-uppercase">Costo Referencia (RD$)</label>
+                        <input asp-for="CostoBaseReferencia" type="number" step="0.01" class="form-control" />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label asp-for="PrecioVentaBase" class="form-label fw-bold small text-uppercase">Precio de Venta (RD$) *</label>
+                        <input asp-for="PrecioVentaBase" type="number" step="0.01" class="form-control fw-bold" />
+                        <span asp-validation-for="PrecioVentaBase" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label asp-for="PrecioOferta" class="form-label fw-bold small text-uppercase">Precio Oferta (Opcional)</label>
+                        <input asp-for="PrecioOferta" type="number" step="0.01" class="form-control text-danger fw-semibold" placeholder="Solo si tiene descuento" />
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mt-3">
+                    <input class="form-check-input" type="checkbox" asp-for="AplicaImpuesto" id="checkImpuesto">
+                    <label class="form-check-label fw-bold small" for="checkImpuesto">
+                        Aplica ITBIS (18% Transferencia de Bienes Industrializados)
+                    </label>
+                </div>
+            </div>
+
+            <!-- MATRIZ DE TALLAS, COLORES Y STOCK -->
+            <div class="dc-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="dc-card-title mb-0">Variantes de Ropa (Tallas & Colores)</h5>
+                        <p class="text-muted small mb-0">Define las combinaciones físicas con su stock y SKU.</p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-dark" id="btnAddVariante">
+                        <i class="bi bi-plus-lg me-1"></i> Agregar Otra Talla/Color
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table-dc" id="tableVariantes">
+                        <thead>
+                            <tr>
+                                <th>Talla *</th>
+                                <th>Color *</th>
+                                <th>SKU (Código Prenda) *</th>
+                                <th style="width: 110px;">Stock Inicial</th>
+                                <th style="width: 100px;">Alerta Mín.</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="variantesBody">
+                            @for (int i = 0; i < Model.Variantes.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        <input name="Variantes[@i].Talla" value="@Model.Variantes[i].Talla" class="form-control form-control-sm" required placeholder="S, M, L, 38..." />
+                                    </td>
+                                    <td>
+                                        <input name="Variantes[@i].Color" value="@Model.Variantes[i].Color" class="form-control form-control-sm" required placeholder="Negro, Champagne..." />
+                                    </td>
+                                    <td>
+                                        <input name="Variantes[@i].Sku" value="@Model.Variantes[i].Sku" class="form-control form-control-sm font-monospace" required />
+                                    </td>
+                                    <td>
+                                        <input name="Variantes[@i].StockActual" type="number" value="@Model.Variantes[i].StockActual" class="form-control form-control-sm" min="0" />
+                                    </td>
+                                    <td>
+                                        <input name="Variantes[@i].StockMinimoAlerta" type="number" value="@Model.Variantes[i].StockMinimoAlerta" class="form-control form-control-sm" min="1" />
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-x-lg"></i></button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: FOTOGRAFÍA DE LA PRENDA Y GUARDADO -->
+        <div class="col-12 col-lg-4">
+            <div class="dc-card text-center">
+                <h5 class="dc-card-title mb-3">Foto de la Prenda</h5>
+                <div class="mb-3">
+                    <div id="imgPreviewWrapper" class="rounded p-2 mb-3 bg-light d-flex align-items-center justify-content-center" style="height: 280px; border: 2px dashed #C5A059; overflow:hidden;">
+                        <img id="imgPreview" src="/images/defaults/product-placeholder.png" alt="Vista previa" class="img-fluid rounded" style="max-height: 260px; object-fit: contain;" />
+                    </div>
+                    <label class="btn btn-outline-dark w-100">
+                        <i class="bi bi-upload me-1"></i> Seleccionar Imagen
+                        <input asp-for="File" type="file" id="fileUploadInput" class="d-none" accept=".jpg,.jpeg,.png,.webp" />
+                    </label>
+                    <small class="text-muted d-block mt-2" style="font-size:11px;">
+                        Formatos: JPG, PNG, WEBP (Hasta 5 MB). Proporción vertical recomendada de catálogo 4:5.
+                    </small>
+                </div>
+            </div>
+
+            <div class="dc-card">
+                <button type="submit" class="btn btn-dc-gold w-100 py-3 fs-5 shadow">
+                    <i class="bi bi-check2-circle me-1"></i> Guardar Prenda
+                </button>
+                <a asp-action="Index" class="btn btn-link text-muted w-100 mt-2 text-decoration-none">
+                    Cancelar
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Vista previa inmediata de la imagen seleccionada
+        const fileInput = document.getElementById('fileUploadInput');
+        const imgPreview = document.getElementById('imgPreview');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    imgPreview.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Generador dinámico de filas para variantes de ropa
+        let varianteIndex = @Model.Variantes.Count;
+        const variantesBody = document.getElementById('variantesBody');
+        const btnAdd = document.getElementById('btnAddVariante');
+
+        btnAdd.addEventListener('click', function() {
+            const codigoModelo = document.getElementById('CodigoModelo').value || 'DC';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input name="Variantes[${varianteIndex}].Talla" class="form-control form-control-sm" required placeholder="M" /></td>
+                <td><input name="Variantes[${varianteIndex}].Color" class="form-control form-control-sm" required placeholder="Color" /></td>
+                <td><input name="Variantes[${varianteIndex}].Sku" value="${codigoModelo}-VAR-${varianteIndex + 1}" class="form-control form-control-sm font-monospace" required /></td>
+                <td><input name="Variantes[${varianteIndex}].StockActual" type="number" value="3" class="form-control form-control-sm" min="0" /></td>
+                <td><input name="Variantes[${varianteIndex}].StockMinimoAlerta" type="number" value="2" class="form-control form-control-sm" min="1" /></td>
+                <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="bi bi-x-lg"></i></button></td>
+            `;
+            variantesBody.appendChild(tr);
+            varianteIndex++;
+        });
+
+        function reindexVariantes() {
+            const rows = variantesBody.querySelectorAll('tr');
+            rows.forEach((row, idx) => {
+                row.querySelectorAll('input').forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (name) {
+                        input.setAttribute('name', name.replace(/Variantes\[\d+\]/, `Variantes[${idx}]`));
+                    }
+                });
+            });
+            varianteIndex = rows.length;
+        }
+
+        // Eliminar fila de variante
+        variantesBody.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-remove-row')) {
+                const tr = e.target.closest('tr');
+                if (variantesBody.children.length > 1) {
+                    tr.remove();
+                    reindexVariantes();
+                } else {
+                    Swal.fire('Atención', 'La prenda debe conservar al menos una variante de talla y color.', 'info');
+                }
+            }
+        });
+
+        document.querySelector('form').addEventListener('submit', function() {
+            reindexVariantes();
+        });
+    </script>
+}

@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Source/" />
+  <Folder Name="/Source/Core/">
+    <Project Path="DC_BOUTIQUE.APPLICATION/DC_BOUTIQUE.Core.Application.csproj" />
+    <Project Path="DC_BOUTIQUE.DOMAIN/DC_BOUTIQUE.Core.Domain.csproj" />
+  </Folder>
+  <Folder Name="/Source/Infrastructure/">
+    <Project Path="DC_BOUTIQUE.Infrastructure.Identity/DC_BOUTIQUE.Infrastructure.Identity.csproj" Id="0e19bd9b-8e19-4dad-839c-97f1e1806ec4" />
+    <Project Path="DC_BOUTIQUE.Infrastructure.Persistence/DC_BOUTIQUE.Infrastructure.Persistence.csproj" Id="7435907b-2510-453a-8f1d-2f627cf8cf9b" />
+    <Project Path="DC_BOUTIQUE.Infrastructure.Shared/DC_BOUTIQUE.Infrastructure.Shared.csproj" Id="863e3d2d-94e9-4f92-92bf-26f46cce4885" />
+  </Folder>
+  <Folder Name="/Source/Presentation/" />
+  <Folder Name="/Source/Presentation/WindowsApp/">
+    <Project Path="DC_BOUTIQUE.WEBAPP/DC_BOUTIQUEAPP.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,303 @@
+@model DC_BOUTIQUE.Core.Application.ViewModels.Usuarios.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Acceso al Sistema — Dahiana Corporan Boutique";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <!-- Tipografías Editoriales de Lujo (Google Fonts con fallback local) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="dc-desktop-shell">
+
+        <!-- ==============================================================
+             PANEL IZQUIERDO: VITRINA ARQUITECTÓNICA DE LA BOUTIQUE
+             ============================================================== -->
+        <aside class="dc-showcase-panel" aria-label="Vitrina Dahiana Corporan Boutique">
+            <div class="dc-showcase-bg"></div>
+            <div class="dc-showcase-overlay"></div>
+
+            <!-- Barra Superior de Estado de Terminal -->
+            <div class="dc-showcase-topbar">
+                <div class="dc-terminal-badge">
+                    <span class="dc-status-dot"></span>
+                    <span>Terminal Principal · Sucursal 01</span>
+                </div>
+
+                <div class="dc-clock-pill">
+                    <span id="dcLiveDate">Sáb, 14 Nov</span>
+                    <span>•</span>
+                    <span class="dc-clock-time" id="dcLiveTime">12:00 PM</span>
+                </div>
+            </div>
+
+            <!-- Pie de Vitrina: Frase de la Pared de la Boutique -->
+            <div class="dc-showcase-footer">
+                <div class="dc-quote-card">
+                    <div class="dc-quote-script">
+                        Moda, Estilo, Confianza, Siempre ♡
+                    </div>
+                    <p class="dc-quote-sub">
+                        Sistema integral de Punto de Venta, Inventario de Alta Costura y Gestión Comercial de <strong>Dahiana Corporan Boutique</strong>.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ==============================================================
+             DIVISOR ARQUITECTÓNICO: LISTONES DE MADERA + LUZ LED CÁLIDA
+             ============================================================== -->
+        <div class="dc-fluted-divider" role="separator" aria-hidden="true"></div>
+
+        <!-- ==============================================================
+             PANEL DERECHO: AUTENTICACIÓN DE OPERADOR / GERENCIA
+             ============================================================== -->
+        <main class="dc-auth-panel">
+            <!-- Cabecera Superior del Panel -->
+            <header class="dc-auth-header-bar">
+                <span class="dc-edition-tag">Sistema de Escritorio</span>
+
+                <div class="dc-window-actions">
+                    <button type="button" class="dc-icon-btn" id="dcThemeToggle" title="Alternar acabado Mármol / Obsidiana">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        <span id="dcThemeLabel">Modo Obsidiana</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Cuerpo Central del Login -->
+            <section class="dc-auth-body">
+                <!-- Emblema Oficial DC con Corona de 5 Puntas -->
+                <div class="dc-brand-header">
+                    <div class="dc-monogram-wrapper">
+                        <svg class="dc-monogram-svg" viewBox="0 0 160 145" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo DC Dahiana Corporan Boutique">
+                            <!-- Corona de 5 puntas con perlas (idéntica al muro de recepción) -->
+                            <g fill="currentColor">
+                                <!-- Perlas superiores de la corona -->
+                                <circle cx="52" cy="19" r="2.7" />
+                                <circle cx="66" cy="12" r="2.9" />
+                                <circle cx="80" cy="8" r="3.3" />
+                                <circle cx="94" cy="12" r="2.9" />
+                                <circle cx="108" cy="19" r="2.7" />
+                                <!-- Cuerpo de la corona -->
+                                <path d="M56 35 L53 23 L66 30 L67 16 L76 28 L80 12 L84 28 L93 16 L94 30 L107 23 L104 35 Z" />
+                                <!-- Base arqueada de la corona -->
+                                <path d="M55 37.5 Q80 33.5 105 37.5 L103.5 40.5 Q80 36.8 56.5 40.5 Z" />
+                            </g>
+
+                            <!-- Monograma Entrelazado "D" y "C" en Serif de Alto Contraste -->
+                            <g fill="currentColor">
+                                <!-- Letra D -->
+                                <text x="27" y="122"
+                                      font-family="'Cormorant Garamond', 'Playfair Display', Georgia, serif"
+                                      font-size="96"
+                                      font-weight="700"
+                                      letter-spacing="-4">D</text>
+                                <!-- Letra C entrelazada -->
+                                <text x="68" y="129"
+                                      font-family="'Cormorant Garamond', 'Playfair Display', Georgia, serif"
+                                      font-size="96"
+                                      font-weight="700"
+                                      letter-spacing="-4">C</text>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <h1 class="dc-brand-title">Dahiana Corporan</h1>
+                    <div class="dc-brand-subtitle">Boutique</div>
+                </div>
+
+                <!-- Formulario de Inicio de Sesión -->
+                <form asp-controller="Auth" asp-action="Login" method="post" novalidate>
+                    @Html.AntiForgeryToken()
+
+                    <!-- Campo Usuario / Código de Empleado -->
+                    <div class="dc-form-group">
+                        <div class="dc-label-row">
+                            <label asp-for="Username" class="dc-label">Usuario o Código de Operador</label>
+                        </div>
+                        <div class="dc-input-wrapper">
+                            <svg class="dc-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <input asp-for="Username"
+                                   class="dc-input"
+                                   placeholder="Ej. dcorporan o CAJA-01"
+                                   autocomplete="username"
+                                   autofocus />
+                        </div>
+                        <span asp-validation-for="Username" class="dc-validation-error"></span>
+                    </div>
+
+                    <!-- Campo Contraseña / PIN -->
+                    <div class="dc-form-group">
+                        <div class="dc-label-row">
+                            <label asp-for="Password" class="dc-label">Contraseña o PIN</label>
+                            <button type="button" class="dc-pin-trigger" id="dcNumpadToggle">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="4" y="2" width="16" height="20" rx="2" />
+                                    <path d="M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h8" />
+                                </svg>
+                                <span>Teclado PIN</span>
+                            </button>
+                        </div>
+                        <div class="dc-input-wrapper">
+                            <svg class="dc-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <input asp-for="Password"
+                                   id="PasswordInput"
+                                   class="dc-input"
+                                   placeholder="••••••••••••"
+                                   autocomplete="current-password" />
+                            <button type="button" class="dc-password-toggle" id="dcTogglePassword" aria-label="Mostrar u ocultar contraseña">
+                                <svg id="dcEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="dc-validation-error"></span>
+                    </div>
+
+                    <!-- Teclado Numérico Táctil Rápido (Ideal para pantalla de mostrador) -->
+                    <div class="dc-numpad-drawer" id="dcNumpadDrawer">
+                        <div class="dc-numpad-grid">
+                            <button type="button" class="dc-numpad-key" data-key="1">1</button>
+                            <button type="button" class="dc-numpad-key" data-key="2">2</button>
+                            <button type="button" class="dc-numpad-key" data-key="3">3</button>
+                            <button type="button" class="dc-numpad-key" data-key="4">4</button>
+                            <button type="button" class="dc-numpad-key" data-key="5">5</button>
+                            <button type="button" class="dc-numpad-key" data-key="6">6</button>
+                            <button type="button" class="dc-numpad-key" data-key="7">7</button>
+                            <button type="button" class="dc-numpad-key" data-key="8">8</button>
+                            <button type="button" class="dc-numpad-key" data-key="9">9</button>
+                            <button type="button" class="dc-numpad-key" data-key="0">0</button>
+                            <button type="button" class="dc-numpad-key" data-key="BACK" title="Borrar último dígito">⌫</button>
+                            <button type="button" class="dc-numpad-key" data-key="CLEAR" title="Limpiar PIN">C</button>
+                        </div>
+                    </div>
+
+                    <!-- Opciones de Turno -->
+                    <div class="dc-session-options">
+                        <label class="dc-checkbox-label">
+                            <input asp-for="RememberMe" class="dc-checkbox" />
+                            <span>Mantener turno activo en esta caja</span>
+                        </label>
+                    </div>
+
+                    <!-- Botón Principal -->
+                    <button type="submit" class="dc-submit-btn">
+                        <span>Ingresar al Sistema</span>
+                        <svg class="dc-submit-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Pie de Estado del Sistema -->
+            <footer class="dc-auth-footer">
+                <div class="dc-footer-item">
+                    <span class="dc-status-dot"></span>
+                    <span>Servidor Local: <strong>Conectado</strong></span>
+                </div>
+                <div class="dc-footer-item">
+                    <span>Acceso rápido</span>
+                    <kbd class="dc-kbd">Enter ↵</kbd>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            // 1. Reloj y Fecha en Tiempo Real para el Mostrador
+            const timeEl = document.getElementById('dcLiveTime');
+            const dateEl = document.getElementById('dcLiveDate');
+
+            function updateClock() {
+                const now = new Date();
+                if (timeEl) {
+                    timeEl.textContent = now.toLocaleTimeString('es-DO', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+                if (dateEl) {
+                    const formattedDate = now.toLocaleDateString('es-DO', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short'
+                    });
+                    dateEl.textContent = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+                }
+            }
+            updateClock();
+            setInterval(updateClock, 15000);
+
+            // 2. Mostrar / Ocultar Contraseña
+            const togglePwdBtn = document.getElementById('dcTogglePassword');
+            const pwdInput = document.getElementById('PasswordInput');
+            if (togglePwdBtn && pwdInput) {
+                togglePwdBtn.addEventListener('click', () => {
+                    const isPassword = pwdInput.type === 'password';
+                    pwdInput.type = isPassword ? 'text' : 'password';
+                    pwdInput.focus();
+                });
+            }
+
+            // 4. Teclado Numérico Táctil Rápido (PIN Pad)
+            const numpadToggle = document.getElementById('dcNumpadToggle');
+            const numpadDrawer = document.getElementById('dcNumpadDrawer');
+            if (numpadToggle && numpadDrawer && pwdInput) {
+                numpadToggle.addEventListener('click', () => {
+                    numpadDrawer.classList.toggle('open');
+                });
+
+                numpadDrawer.querySelectorAll('.dc-numpad-key').forEach(keyBtn => {
+                    keyBtn.addEventListener('click', () => {
+                        const key = keyBtn.getAttribute('data-key');
+                        if (key === 'CLEAR') {
+                            pwdInput.value = '';
+                        } else if (key === 'BACK') {
+                            pwdInput.value = pwdInput.value.slice(0, -1);
+                        } else {
+                            pwdInput.value += key;
+                        }
+                        pwdInput.focus();
+                    });
+                });
+            }
+
+            // 5. Alternador de Acabado: Mármol Travertino (Claro) vs Obsidiana (Oscuro)
+            const themeBtn = document.getElementById('dcThemeToggle');
+            const themeLabel = document.getElementById('dcThemeLabel');
+            if (themeBtn && themeLabel) {
+                themeBtn.addEventListener('click', () => {
+                    const isObsidian = document.body.classList.toggle('theme-obsidian');
+                    themeLabel.textContent = isObsidian ? 'Modo Mármol' : 'Modo Obsidiana';
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

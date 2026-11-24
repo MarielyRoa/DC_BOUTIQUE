@@ -1,0 +1,170 @@
+@model DC_BOUTIQUE.Core.Application.ViewModels.Productos.SaveProductoViewModel
+@{
+    ViewData["Title"] = "Editar Prenda";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1" style="font-family:'Cormorant Garamond', serif;font-size:28px;">Editar Prenda: @Model.Nombre</h1>
+        <p class="text-muted mb-0 small">Modificación de precios, existencias por talla y fotografía.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Volver al Catálogo
+    </a>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="ImagenUrl" />
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
+            <div class="dc-card">
+                <h5 class="dc-card-title mb-3">Información de la Prenda</h5>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-4">
+                        <label asp-for="CodigoModelo" class="form-label fw-bold small text-uppercase">Código / Modelo *</label>
+                        <input asp-for="CodigoModelo" class="form-control" />
+                        <span asp-validation-for="CodigoModelo" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <label asp-for="Nombre" class="form-label fw-bold small text-uppercase">Nombre de la Prenda *</label>
+                        <input asp-for="Nombre" class="form-control" autofocus />
+                        <span asp-validation-for="Nombre" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-6">
+                        <label asp-for="CategoriaId" class="form-label fw-bold small text-uppercase">Categoría *</label>
+                        <select asp-for="CategoriaId" asp-items="ViewBag.Categorias" class="form-select"></select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label asp-for="Marca" class="form-label fw-bold small text-uppercase">Marca / Origen</label>
+                        <input asp-for="Marca" class="form-control" />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label asp-for="MaterialPrincipal" class="form-label fw-bold small text-uppercase">Material / Tela</label>
+                        <input asp-for="MaterialPrincipal" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Descripcion" class="form-label fw-bold small text-uppercase">Descripción</label>
+                    <textarea asp-for="Descripcion" rows="2" class="form-control"></textarea>
+                </div>
+            </div>
+
+            <!-- PRECIOS -->
+            <div class="dc-card">
+                <h5 class="dc-card-title mb-3">Precios</h5>
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label asp-for="CostoBaseReferencia" class="form-label fw-bold small text-uppercase">Costo Referencia (RD$)</label>
+                        <input asp-for="CostoBaseReferencia" type="number" step="0.01" class="form-control" />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label asp-for="PrecioVentaBase" class="form-label fw-bold small text-uppercase">Precio de Venta (RD$) *</label>
+                        <input asp-for="PrecioVentaBase" type="number" step="0.01" class="form-control fw-bold" />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label asp-for="PrecioOferta" class="form-label fw-bold small text-uppercase">Precio Oferta</label>
+                        <input asp-for="PrecioOferta" type="number" step="0.01" class="form-control text-danger fw-semibold" />
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mt-3">
+                    <input class="form-check-input" type="checkbox" asp-for="AplicaImpuesto" id="checkImpuesto">
+                    <label class="form-check-label fw-bold small" for="checkImpuesto">
+                        Aplica ITBIS (18%)
+                    </label>
+                </div>
+            </div>
+
+            <!-- VARIANTES -->
+            <div class="dc-card">
+                <h5 class="dc-card-title mb-3">Variantes de Talla y Color</h5>
+                <div class="table-responsive">
+                    <table class="table-dc">
+                        <thead>
+                            <tr>
+                                <th>Talla</th>
+                                <th>Color</th>
+                                <th>SKU</th>
+                                <th style="width: 110px;">Stock</th>
+                                <th style="width: 100px;">Alerta Mín.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Variantes.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        <input type="hidden" name="Variantes[@i].Id" value="@Model.Variantes[i].Id" />
+                                        <input type="hidden" name="Variantes[@i].ProductoId" value="@Model.Variantes[i].ProductoId" />
+                                        <input name="Variantes[@i].Talla" value="@Model.Variantes[i].Talla" class="form-control form-control-sm" required />
+                                    </td>
+                                    <td>
+                                        <input name="Variantes[@i].Color" value="@Model.Variantes[i].Color" class="form-control form-control-sm" required />
+                                    </td>
+                                    <td>
+                                        <input name="Variantes[@i].Sku" value="@Model.Variantes[i].Sku" class="form-control form-control-sm font-monospace" required />
+                                    </td>
+                                    <td>
+                                        <input name="Variantes[@i].StockActual" type="number" value="@Model.Variantes[i].StockActual" class="form-control form-control-sm" min="0" />
+                                    </td>
+                                    <td>
+                                        <input name="Variantes[@i].StockMinimoAlerta" type="number" value="@Model.Variantes[i].StockMinimoAlerta" class="form-control form-control-sm" min="1" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="dc-card text-center">
+                <h5 class="dc-card-title mb-3">Foto de la Prenda</h5>
+                <div class="mb-3">
+                    <div class="rounded p-2 mb-3 bg-light d-flex align-items-center justify-content-center" style="height: 280px; border: 2px dashed #C5A059; overflow:hidden;">
+                        <img id="imgPreview" src="@(string.IsNullOrWhiteSpace(Model.ImagenUrl) ? "/images/defaults/product-placeholder.png" : Model.ImagenUrl)" alt="Foto" class="img-fluid rounded" style="max-height: 260px; object-fit: contain;" />
+                    </div>
+                    <label class="btn btn-outline-dark w-100">
+                        <i class="bi bi-upload me-1"></i> Cambiar Fotografía
+                        <input asp-for="File" type="file" id="fileUploadInput" class="d-none" accept=".jpg,.jpeg,.png,.webp" />
+                    </label>
+                </div>
+            </div>
+
+            <div class="dc-card">
+                <button type="submit" class="btn btn-dc-gold w-100 py-3 fs-5 shadow">
+                    <i class="bi bi-arrow-repeat me-1"></i> Guardar Cambios
+                </button>
+                <a asp-action="Index" class="btn btn-link text-muted w-100 mt-2 text-decoration-none">Cancelar</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const fileInput = document.getElementById('fileUploadInput');
+        const imgPreview = document.getElementById('imgPreview');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    imgPreview.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+}

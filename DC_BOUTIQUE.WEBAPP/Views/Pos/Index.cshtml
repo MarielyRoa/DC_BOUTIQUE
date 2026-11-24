@@ -1,0 +1,1636 @@
+@model List<DC_BOUTIQUE.Core.Application.ViewModels.Productos.ProductoViewModel>?
+@{
+    ViewData["Title"] = "Punto de Venta - Módulo de Cobro";
+    var turno = ViewBag.Turno as DC_BOUTIQUE.Core.Application.ViewModels.Caja.TurnoCajaViewModel;
+    var clientes = ViewBag.Clientes as List<DC_BOUTIQUE.Core.Application.ViewModels.Clientes.ClienteViewModel> ?? new();
+    var clientePredeterminado = ViewBag.ClientePredeterminado as DC_BOUTIQUE.Core.Application.ViewModels.Clientes.ClienteViewModel;
+    var productos = Model ?? new();
+}
+
+<style>
+    /* ==========================================================================
+       POS FULLSCREEN VIEWPORT LOCK (CERO SCROLL GENERAL EN LA PÁGINA)
+       ========================================================================== */
+    html, body {
+        overflow: hidden !important;
+        height: 100% !important;
+    }
+
+    .dc-content {
+        height: calc(100vh - 60px) !important;
+        max-height: calc(100vh - 60px) !important;
+        overflow: hidden !important;
+        padding: 10px 18px !important;
+        box-sizing: border-box !important;
+    }
+
+    .pos-screen-wrapper {
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow: hidden;
+    }
+
+    /* BARRA SUPERIOR DEL POS */
+    .pos-top-header {
+        width: 100%;
+        box-sizing: border-box;
+        background: #ffffff;
+        border: 1px solid var(--dc-border);
+        border-radius: 12px;
+        padding: 8px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        flex-shrink: 0;
+    }
+
+    .pos-title-badge {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pos-title-badge i {
+        font-size: 19px;
+        color: var(--dc-sky);
+    }
+
+    .pos-title-text {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--dc-text);
+        letter-spacing: -0.2px;
+    }
+
+    .pos-header-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .pos-shift-pill {
+        background: var(--dc-sky-bg);
+        color: var(--dc-sky-hover);
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* GRID PRINCIPAL: 2 COLUMNAS (CATÁLOGO A LA IZQUIERDA CON SCROLL PROPIO, VENTA ACTUAL A LA DERECHA FIJA) */
+    .pos-main-layout {
+        flex: 1 1 0;
+        min-height: 0 !important; /* IMPRESCINDIBLE para que el flexbox no desborde */
+        height: 100%;
+        max-height: 100%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 490px;
+        grid-template-rows: minmax(0, 1fr);
+        gap: 12px;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    @@media (max-width: 1400px) {
+        .pos-main-layout {
+            grid-template-columns: minmax(0, 1fr) 450px;
+        }
+    }
+
+    @@media (max-width: 1180px) {
+        .pos-main-layout {
+            grid-template-columns: minmax(0, 1fr) 410px;
+        }
+    }
+
+    /* ==========================================================================
+       PANEL IZQUIERDO: BÚSQUEDA Y CATÁLOGO DE PRENDAS (SCROLL EXCLUSIVO AQUÍ)
+       ========================================================================== */
+    .pos-catalog-panel {
+        min-width: 0;
+        min-height: 0 !important;
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        box-sizing: border-box;
+        background: #ffffff;
+        border: 1px solid var(--dc-border);
+        border-radius: 14px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+    }
+
+    /* FILA SUPERIOR DE BÚSQUEDA */
+    .pos-search-strip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-shrink: 0;
+    }
+
+    .pos-search-box {
+        flex: 1;
+        position: relative;
+    }
+
+    .pos-search-box i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--dc-text-muted);
+        font-size: 16px;
+    }
+
+    .pos-search-input {
+        width: 100%;
+        padding: 10px 14px 10px 42px;
+        font-size: 14px;
+        border: 1.5px solid var(--dc-border);
+        border-radius: 10px;
+        background: #f8fafc;
+        color: var(--dc-text);
+        transition: all 0.2s;
+    }
+
+    .pos-search-input:focus {
+        background: #ffffff;
+        border-color: var(--dc-sky);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+
+    /* PASTILLAS DE CATEGORÍA HORIZONTALES */
+    .pos-categories-strip {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        margin-bottom: 12px;
+        scrollbar-width: thin;
+    }
+
+    .pos-cat-pill {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid transparent;
+        border-radius: 20px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s ease;
+    }
+
+    .pos-cat-pill:hover {
+        background: #e2e8f0;
+        color: var(--dc-text);
+    }
+
+    .pos-cat-pill.active {
+        background: var(--dc-sky);
+        color: #ffffff;
+        border-color: var(--dc-sky);
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+    }
+
+    .pos-cat-pill .badge {
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    .pos-cat-pill:not(.active) .badge {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    /* CUADRÍCULA DE PRODUCTOS (SCROLL EXCLUSIVO DENTRO DE ESTE CUADRO) */
+    .pos-items-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+        gap: 12px;
+        overflow-y: auto !important;
+        overflow-x: hidden;
+        padding-right: 6px;
+        padding-bottom: 8px;
+        flex: 1;
+        min-height: 0; /* CRUCIAL: evita que el flexbox se expanda verticalmente */
+        align-content: start;
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Scrollbar estética y suave exclusiva para el cuadro de prendas */
+    .pos-items-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+    .pos-items-grid::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 6px;
+    }
+    .pos-items-grid::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 6px;
+    }
+    .pos-items-grid::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .pos-item-card {
+        background: #ffffff;
+        border: 1.5px solid var(--dc-border);
+        border-radius: 12px;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+    }
+
+    .pos-item-card:hover {
+        border-color: var(--dc-sky);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(2, 132, 199, 0.12);
+    }
+
+    .pos-item-img-wrap {
+        width: 100%;
+        height: 120px;
+        border-radius: 8px;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .pos-item-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+        transition: transform 0.2s;
+    }
+
+    .pos-item-card:hover .pos-item-img {
+        transform: scale(1.04);
+    }
+
+    .pos-item-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dc-text);
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .pos-item-price {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--dc-sky-hover);
+        letter-spacing: -0.2px;
+    }
+
+    .pos-item-stock {
+        font-size: 11px;
+        color: #10b981;
+        font-weight: 600;
+        margin-top: 2px;
+    }
+
+    /* ESTADO VACÍO EN CATÁLOGO */
+    .pos-empty-catalog {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--dc-text-muted);
+        text-align: center;
+        padding: 30px;
+    }
+
+    .pos-empty-catalog i {
+        font-size: 48px;
+        color: #cbd5e1;
+        margin-bottom: 12px;
+    }
+
+    /* ==========================================================================
+       PANEL DERECHO: VENTA ACTUAL, TOTALES & MÓDULO DE COBRO (FIJO Y ESTABLE)
+       ========================================================================== */
+    .pos-cart-panel {
+        min-width: 0;
+        min-height: 0 !important;
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        box-sizing: border-box;
+        background: #ffffff;
+        border: 1px solid var(--dc-border);
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+    }
+
+    /* ENCABEZADO DE VENTA ACTUAL */
+    .pos-cart-header {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--dc-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #ffffff;
+        flex-shrink: 0;
+    }
+
+    .pos-cart-title {
+        font-size: 14.5px;
+        font-weight: 700;
+        color: var(--dc-text);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .pos-cart-title i {
+        color: var(--dc-sky);
+        font-size: 17px;
+    }
+
+    /* CLIENTE SELECCIONADO (COMPACTO) */
+    .pos-client-row {
+        padding: 6px 14px;
+        background: #f8fafc;
+        border-bottom: 1px solid var(--dc-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    /* TABLA / LISTA DE ITEMS DEL TICKET (CON SCROLL INTERNO SI SE AGREGAN MUCHOS ITEMS) */
+    .pos-cart-items-wrapper {
+        flex: 1;
+        min-height: 0; /* CRUCIAL: permite que la tabla de items haga scroll dentro del ticket */
+        overflow-y: auto;
+        padding: 0;
+    }
+
+    .pos-cart-items-wrapper::-webkit-scrollbar {
+        width: 5px;
+    }
+    .pos-cart-items-wrapper::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .pos-cart-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .pos-cart-table th {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--dc-text-muted);
+        padding: 8px 12px;
+        background: #f8fafc;
+        border-bottom: 1px solid var(--dc-border);
+        text-align: left;
+    }
+
+    .pos-cart-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        font-size: 13px;
+    }
+
+    /* BOTONES DE CANTIDAD (- 1 +) */
+    .pos-qty-group {
+        display: inline-flex;
+        align-items: center;
+        background: #f1f5f9;
+        border-radius: 6px;
+        padding: 2px;
+    }
+
+    .pos-qty-btn {
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: #ffffff;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 12px;
+        color: var(--dc-text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .pos-qty-btn:hover {
+        background: #e2e8f0;
+    }
+
+    .pos-qty-val {
+        padding: 0 8px;
+        font-weight: 700;
+        font-size: 12.5px;
+        color: var(--dc-text);
+        min-width: 22px;
+        text-align: center;
+    }
+
+    .pos-btn-del {
+        background: none;
+        border: none;
+        color: #ef4444;
+        font-size: 15px;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.15s;
+    }
+
+    .pos-btn-del:hover {
+        background: #fee2e2;
+    }
+
+    /* ESTADO VACÍO DEL TICKET */
+    .pos-empty-cart {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--dc-text-muted);
+        text-align: center;
+        padding: 30px;
+    }
+
+    .pos-empty-cart i {
+        font-size: 42px;
+        color: var(--dc-sky-light);
+        margin-bottom: 10px;
+    }
+
+    .pos-empty-cart p {
+        font-size: 13.5px;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    /* RESUMEN DE TOTALES */
+    .pos-totals-block {
+        padding: 10px 14px;
+        background: #ffffff;
+        border-top: 1px solid var(--dc-border);
+        flex-shrink: 0;
+    }
+
+    .pos-totals-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: var(--dc-text-muted);
+        margin-bottom: 4px;
+    }
+
+    .pos-total-banner {
+        background: linear-gradient(135deg, var(--dc-sky-bg), #bae6fd);
+        border: 1px solid var(--dc-sky-border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+    }
+
+    .pos-total-label {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--dc-text);
+    }
+
+    .pos-total-amount {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--dc-sky-hover);
+        letter-spacing: -0.5px;
+    }
+
+    /* MÉTODOS DE PAGO (EFECTIVO, TARJETA, TRANSFERENCIA, OTRO) */
+    .pos-payment-block {
+        padding: 10px 14px;
+        background: #f8fafc;
+        border-top: 1px solid var(--dc-border);
+        flex-shrink: 0;
+    }
+
+    .pos-payment-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--dc-text-muted);
+        margin-bottom: 8px;
+    }
+
+    .pos-payment-methods {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .pos-pay-btn {
+        background: #ffffff;
+        border: 1.5px solid var(--dc-border);
+        border-radius: 8px;
+        padding: 7px 4px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--dc-text);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .pos-pay-btn i {
+        font-size: 15px;
+        color: var(--dc-sky);
+    }
+
+    .pos-pay-btn.active {
+        background: var(--dc-sky);
+        border-color: var(--dc-sky);
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+    }
+
+    .pos-pay-btn.active i {
+        color: #ffffff;
+    }
+
+    /* MONTO RECIBIDO Y CAMBIO (ESTILO HORIZONTAL BELLAMODA) */
+    .pos-cash-calc-card {
+        background: #ffffff;
+        border: 1px solid var(--dc-border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 12px;
+    }
+
+    .pos-cash-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .pos-cash-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dc-text);
+        margin: 0;
+    }
+
+    .pos-cash-input-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        max-width: 220px;
+        width: 100%;
+        background: #f8fafc;
+        border: 1.5px solid var(--dc-border);
+        border-radius: 8px;
+        padding: 2px 8px;
+        transition: all 0.2s;
+    }
+
+    .pos-cash-input-wrap:focus-within {
+        background: #ffffff;
+        border-color: var(--dc-sky);
+        box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+
+    .pos-currency-prefix {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--dc-text-muted);
+    }
+
+    .pos-calc-input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        padding: 6px 2px;
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--dc-text);
+        text-align: right;
+    }
+
+    .pos-calc-input:focus {
+        outline: none;
+    }
+
+    .pos-change-display {
+        font-size: 18px;
+        font-weight: 800;
+        color: #10b981;
+        text-align: right;
+    }
+
+    .pos-change-display.insufficient {
+        color: #ef4444;
+        font-size: 14px;
+    }
+
+    /* BOTÓN PRINCIPAL FINALIZAR VENTA (GRANDE Y DESTACADO) */
+    .pos-btn-finish {
+        width: 100%;
+        background: linear-gradient(135deg, var(--dc-sky), #0284c7);
+        border: none;
+        border-radius: 12px;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 3px 12px rgba(2, 132, 199, 0.35);
+    }
+
+    .pos-btn-finish:hover:not(:disabled) {
+        background: linear-gradient(135deg, var(--dc-sky-hover), var(--dc-sky));
+        transform: translateY(-1px);
+        box-shadow: 0 5px 16px rgba(2, 132, 199, 0.45);
+    }
+
+    .pos-btn-finish:disabled {
+        background: #cbd5e1;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+
+    /* BOTONES DE ACCIÓN BAJO EL CATÁLOGO (ESTILO BELLAMODA) */
+    .pos-catalog-bottom-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-top: 12px;
+        margin-top: auto;
+        border-top: 1px solid var(--dc-border);
+    }
+
+    .pos-action-btn {
+        flex: 1;
+        background: #f8fafc;
+        border: 1px solid var(--dc-border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.18s ease;
+    }
+
+    .pos-action-btn:hover {
+        background: #e2e8f0;
+        color: var(--dc-text);
+        transform: translateY(-1px);
+    }
+
+    .pos-action-btn.btn-del-cart:hover {
+        background: #fee2e2;
+        color: #ef4444;
+        border-color: #fca5a5;
+    }
+</style>
+
+<div class="pos-screen-wrapper">
+    @Html.AntiForgeryToken()
+
+    <!-- ENCABEZADO SUPERIOR DEL PUNTO DE VENTA -->
+    <div class="pos-top-header">
+        <div class="pos-title-badge">
+            <i class="bi bi-cart4"></i>
+            <div>
+                <span class="pos-title-text">Punto de Venta — Módulo de Cobro</span>
+                <span class="text-muted small ms-2 d-none d-md-inline">Terminal rápida de facturación</span>
+            </div>
+        </div>
+
+        <div class="pos-header-info">
+            <!-- Reloj del POS -->
+            <div class="text-muted small d-flex align-items-center gap-1">
+                <i class="bi bi-clock"></i>
+                <span id="posLiveClock">--:--</span>
+            </div>
+
+            <!-- Badge del Turno Activo -->
+            @if (turno != null)
+            {
+                <div class="pos-shift-pill" title="Turno Activo">
+                    <span class="dc-status-dot"></span>
+                    <span>Caja 01 · @turno.CodigoTurno</span>
+                </div>
+            }
+
+            <!-- Botón de Cerrar Caja / Cuadre -->
+            <a asp-controller="Caja" asp-action="Index" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 px-3 shadow-sm" title="Realizar Cuadre de Caja">
+                <i class="bi bi-lock-fill"></i>
+                <span class="fw-semibold">Cerrar Caja</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- GRID PRINCIPAL DEL PUNTO DE VENTA -->
+    <div class="pos-main-layout">
+
+        <!-- ====================================================================
+             COLUMNA IZQUIERDA: BUSCADOR, CATEGORÍAS Y CATÁLOGO DE PRENDAS
+             ==================================================================== -->
+        <div class="pos-catalog-panel">
+            
+            <!-- BUSCADOR EN TIEMPO REAL -->
+            <div class="pos-search-strip">
+                <div class="pos-search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="posSearchInput" class="pos-search-input" 
+                           placeholder="Buscar producto por nombre, código o categoría... [F2]" autofocus />
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearSearch" title="Limpiar búsqueda">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <!-- PASTILLAS DE FILTRO POR CATEGORÍA -->
+            <div class="pos-categories-strip" id="categoryPills">
+                <button type="button" class="pos-cat-pill active" data-cat="ALL">
+                    <i class="bi bi-grid-fill"></i> Todas
+                    <span class="badge">@productos.Count</span>
+                </button>
+                @foreach (var cat in productos.Select(p => p.NombreCategoria).Distinct())
+                {
+                    var count = productos.Count(p => p.NombreCategoria == cat);
+                    <button type="button" class="pos-cat-pill" data-cat="@cat">
+                        @cat <span class="badge">@count</span>
+                    </button>
+                }
+            </div>
+
+            <!-- CUADRÍCULA DE PRENDAS -->
+            <div class="pos-items-grid" id="posProductGrid">
+                @if (productos.Any())
+                {
+                    @foreach (var prod in productos)
+                    {
+                        var precioEfectivo = prod.PrecioOferta ?? prod.PrecioVentaBase;
+                        var primeraVariante = prod.Variantes.FirstOrDefault();
+                        var varianteId = primeraVariante?.Id ?? Guid.Empty;
+                        var varianteSku = primeraVariante?.Sku ?? prod.CodigoModelo;
+                        var varianteTalla = primeraVariante?.Talla ?? "ÚNICA";
+                        var varianteColor = primeraVariante?.Color ?? "General";
+                        var stock = prod.StockTotal;
+                        var foto = string.IsNullOrWhiteSpace(prod.ImagenUrl) ? "/images/defaults/product-placeholder.png" : prod.ImagenUrl;
+
+                        <div class="pos-item-card prod-card" 
+                             data-id="@prod.Id"
+                             data-variante-id="@varianteId"
+                             data-nombre="@prod.Nombre"
+                             data-codigo="@prod.CodigoModelo.ToLowerInvariant()"
+                             data-categoria="@prod.NombreCategoria"
+                             data-precio="@precioEfectivo"
+                             data-sku="@varianteSku"
+                             data-talla="@varianteTalla"
+                             data-color="@varianteColor"
+                             data-stock="@stock"
+                             data-foto="@foto"
+                             data-impuesto="@(prod.AplicaImpuesto ? "1" : "0")"
+                             data-porcentaje-impuesto="@prod.PorcentajeImpuesto"
+                             data-variants-count="@prod.Variantes.Count"
+                             onclick="onProductCardClicked(this)">
+                            
+                            <div class="pos-item-img-wrap">
+                                <img src="@foto" alt="@prod.Nombre" class="pos-item-img" onerror="this.onerror=null; this.src='/images/defaults/product-placeholder.png';" />
+                            </div>
+
+                            <div class="pos-item-name" title="@prod.Nombre">@prod.Nombre</div>
+                            <div class="pos-item-price">RD$ @precioEfectivo.ToString("N2")</div>
+                            <div class="pos-item-stock">@stock uds en stock</div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="pos-empty-catalog" style="grid-column: 1 / -1; padding: 40px 20px; text-align: center;">
+                        <i class="bi bi-stars display-4 text-primary mb-2" style="color: var(--dc-sky) !important;"></i>
+                        <h5 class="fw-bold text-dark mt-2">¡Catálogo listo para activarse!</h5>
+                        <p class="text-muted small">Carga las prendas y fotos de muestra en todas las categorías con un solo clic:</p>
+                        <a asp-controller="Producto" asp-action="CargarDemo" class="btn btn-dc-sky px-4 py-2 mt-2 shadow-sm">
+                            <i class="bi bi-magic me-1"></i> Cargar Catálogo Demo con Fotos
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <!-- ESTADO VACÍO CUANDO EL FILTRO NO ENCUENTRA COINCIDENCIAS -->
+            <div id="noProductsFound" class="pos-empty-catalog d-none" style="flex:1;">
+                <i class="bi bi-search"></i>
+                <h6 class="fw-bold mb-1">No se encontraron productos</h6>
+                <p class="text-muted small mb-0">Intenta buscar por otro nombre, código o categoría.</p>
+            </div>
+
+            <!-- ACCIONES RÁPIDAS (BAJO EL CATÁLOGO - ESTRUCTURA BELLAMODA) -->
+            <div class="pos-catalog-bottom-actions">
+                <button type="button" class="pos-action-btn btn-del-cart" onclick="limpiarCarritoCompleto(true)" title="Vaciar venta actual">
+                    <i class="bi bi-trash3-fill"></i>
+                    <span>Eliminar Venta</span>
+                </button>
+                <button type="button" class="pos-action-btn" onclick="reimprimirUltimoTicket()" title="Reimprimir último ticket">
+                    <i class="bi bi-printer-fill"></i>
+                    <span>Imprimir Ticket</span>
+                </button>
+                <button type="button" class="pos-action-btn" onclick="limpiarCampos()" title="Limpiar búsqueda y filtros">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <span>Limpiar</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             COLUMNA DERECHA: VENTA ACTUAL (TICKET, TOTALES & COBRO)
+             ==================================================================== -->
+        <div class="pos-cart-panel">
+            
+            <!-- ENCABEZADO VENTA ACTUAL -->
+            <div class="pos-cart-header">
+                <div class="pos-cart-title">
+                    <i class="bi bi-bag-check-fill"></i>
+                    <span>Venta Actual</span>
+                </div>
+                <span class="badge bg-light text-primary border" id="cartCountBadge">0 artículos</span>
+            </div>
+
+            <!-- SELECTOR COMPACTO DE CLIENTE -->
+            <div class="pos-client-row">
+                <div class="d-flex align-items-center gap-1 text-muted">
+                    <i class="bi bi-person"></i>
+                    <span>Cliente:</span>
+                </div>
+                <select id="posClienteSelect" class="form-select form-select-sm border-0 bg-transparent fw-semibold text-end p-0 pe-3" style="width:auto; max-width:230px; cursor:pointer;">
+                    @if (clientePredeterminado != null)
+                    {
+                        <option value="@clientePredeterminado.Id" selected>@clientePredeterminado.Nombres @clientePredeterminado.Apellidos (Consumidor Final)</option>
+                    }
+                    @foreach (var c in clientes.Where(cl => clientePredeterminado == null || cl.Id != clientePredeterminado.Id))
+                    {
+                        <option value="@c.Id">@c.Nombres @c.Apellidos @(!string.IsNullOrEmpty(c.CedulaORnc) ? $"({c.CedulaORnc})" : "")</option>
+                    }
+                </select>
+            </div>
+
+            <!-- CONTENEDOR DE ITEMS DE VENTA -->
+            <div class="pos-cart-items-wrapper">
+                <table class="pos-cart-table" id="cartTable">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Cant.</th>
+                            <th class="text-end">Precio</th>
+                            <th class="text-end">Subtotal</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartTableBody">
+                        <!-- Las filas se renderizan dinámicamente -->
+                    </tbody>
+                </table>
+
+                <!-- ESTADO VACÍO CUANDO NO HAY ITEMS EN CARRITO -->
+                <div id="cartEmptyView" class="pos-empty-cart">
+                    <i class="bi bi-bag-heart"></i>
+                    <p>¡Selecciona productos para agregarlos a la venta!</p>
+                    <small class="text-muted mt-1">Haz clic en cualquier prenda de la izquierda</small>
+                </div>
+            </div>
+
+            <!-- RESUMEN DE TOTALES (SUBTOTAL, ITBIS, TOTAL) -->
+            <div class="pos-totals-block">
+                <div class="pos-totals-row">
+                    <span>Subtotal:</span>
+                    <span id="lblSubtotal">RD$ 0.00</span>
+                </div>
+                <div class="pos-totals-row">
+                    <span>ITBIS (18%):</span>
+                    <span id="lblItbis">RD$ 0.00</span>
+                </div>
+                <div class="pos-total-banner">
+                    <span class="pos-total-label">Total a Cobrar:</span>
+                    <span class="pos-total-amount" id="lblTotal">RD$ 0.00</span>
+                </div>
+            </div>
+
+            <!-- MÉTODOS DE PAGO Y CÁLCULO DE CAMBIO -->
+            <div class="pos-payment-block">
+                <div class="pos-payment-title">Método de Pago</div>
+                
+                <div class="pos-payment-methods">
+                    <button type="button" class="pos-pay-btn active" data-method="1" onclick="setPaymentMethod(1)">
+                        <i class="bi bi-cash-stack"></i>
+                        <span>Efectivo</span>
+                    </button>
+                    <button type="button" class="pos-pay-btn" data-method="2" onclick="setPaymentMethod(2)">
+                        <i class="bi bi-credit-card-2-front"></i>
+                        <span>Tarjeta</span>
+                    </button>
+                    <button type="button" class="pos-pay-btn" data-method="4" onclick="setPaymentMethod(4)">
+                        <i class="bi bi-bank"></i>
+                        <span>Transfer.</span>
+                    </button>
+                    <button type="button" class="pos-pay-btn" data-method="3" onclick="setPaymentMethod(3)">
+                        <i class="bi bi-three-dots"></i>
+                        <span>Otro</span>
+                    </button>
+                </div>
+
+                <!-- CÁLCULO EN EFECTIVO: MONTO RECIBIDO Y CAMBIO (ESTILO HORIZONTAL BELLAMODA) -->
+                <div class="pos-cash-calc-card" id="cashCalcArea">
+                    <div class="pos-cash-row mb-2">
+                        <label for="txtMontoRecibido" class="pos-cash-label">Monto Recibido:</label>
+                        <div class="pos-cash-input-wrap">
+                            <span class="pos-currency-prefix">RD$</span>
+                            <input type="number" step="0.01" id="txtMontoRecibido" class="pos-calc-input" placeholder="0.00" />
+                        </div>
+                    </div>
+                    <div class="pos-cash-row">
+                        <span class="pos-cash-label">Cambio / Devuelta:</span>
+                        <div class="pos-change-display" id="lblCambio">RD$ 0.00</div>
+                    </div>
+                </div>
+
+                <!-- BOTÓN PRINCIPAL FINALIZAR VENTA (GRANDE Y DESTACADO) -->
+                <button type="button" class="pos-btn-finish" id="btnFinalizarVenta" onclick="procesarCobroVenta()" disabled>
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Finalizar Venta</span>
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- ==========================================================================
+     MODAL DE TICKET TÉRMICO PARA IMPRESIÓN DIRECTA
+     ========================================================================== -->
+<div class="modal fade" id="modalTicket" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content shadow border-0" style="border-radius:14px;">
+            <div class="modal-header py-2 bg-light">
+                <h6 class="modal-title fw-bold text-dark"><i class="bi bi-receipt me-1 text-primary"></i> Comprobante de Venta</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" style="max-height: 480px; overflow-y: auto;">
+                <div id="ticketContainer" class="p-2"></div>
+            </div>
+            <div class="modal-footer p-2 bg-light">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-sm btn-dc-sky" onclick="imprimirTicketIframe()">
+                    <i class="bi bi-printer-fill me-1"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<iframe id="printIframe" style="display:none;"></iframe>
+
+@section Scripts {
+    <script>
+        // ======================================================================
+        // ESTADO GLOBAL DE VENTA Y CARRITO
+        // ======================================================================
+        let cartItems = [];
+        let metodoPagoActual = 1; // 1: Efectivo, 2: Tarjeta, 4: Transferencia, 3: Otro
+        let ultimoTicketHtml = null;
+        let ultimaVentaId = null;
+
+        // Reloj en tiempo real
+        function updatePosClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' });
+            const clockEl = document.getElementById('posLiveClock');
+            if (clockEl) clockEl.textContent = timeStr;
+        }
+        setInterval(updatePosClock, 1000);
+        updatePosClock();
+
+        // ======================================================================
+        // AGREGAR PRENDAS CON UN CLIC
+        // ======================================================================
+        function onProductCardClicked(card) {
+            const varianteId = card.getAttribute('data-variante-id');
+            const nombre = card.getAttribute('data-nombre');
+            const precio = parseFloat(card.getAttribute('data-precio')) || 0;
+            const sku = card.getAttribute('data-sku') || '';
+            const talla = card.getAttribute('data-talla') || 'ÚNICA';
+            const color = card.getAttribute('data-color') || 'General';
+            const stock = parseInt(card.getAttribute('data-stock')) || 0;
+            const foto = card.getAttribute('data-foto') || '';
+            const aplicaImpuesto = card.getAttribute('data-impuesto') === '1';
+            const porcentajeImpuesto = parseFloat(card.getAttribute('data-porcentaje-impuesto')) || 18.0;
+
+            if (stock <= 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Sin inventario',
+                    text: `La prenda "${nombre}" no tiene stock disponible en este momento.`,
+                    confirmButtonColor: '#0284c7'
+                });
+                return;
+            }
+
+            agregarAlCarrito({
+                varianteId: varianteId,
+                nombre: nombre,
+                precio: precio,
+                sku: sku,
+                talla: talla,
+                color: color,
+                stock: stock,
+                foto: foto,
+                aplicaImpuesto: aplicaImpuesto,
+                porcentajeImpuesto: porcentajeImpuesto
+            });
+        }
+
+        function agregarAlCarrito(prod) {
+            const existing = cartItems.find(i => i.varianteId === prod.varianteId);
+
+            if (existing) {
+                if (existing.cantidad + 1 > prod.stock) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Límite de inventario alcanzado',
+                        text: `Solo hay ${prod.stock} unidades disponibles en tienda.`,
+                        confirmButtonColor: '#0284c7'
+                    });
+                    return;
+                }
+                existing.cantidad += 1;
+            } else {
+                cartItems.push({
+                    varianteId: prod.varianteId,
+                    nombre: prod.nombre,
+                    precio: prod.precio,
+                    sku: prod.sku,
+                    talla: prod.talla,
+                    color: prod.color,
+                    stock: prod.stock,
+                    foto: prod.foto,
+                    aplicaImpuesto: prod.aplicaImpuesto,
+                    porcentajeImpuesto: prod.porcentajeImpuesto,
+                    cantidad: 1
+                });
+            }
+
+            renderizarCarrito();
+        }
+
+        // ======================================================================
+        // MODIFICAR CANTIDADES (+ / - / ELIMINAR)
+        // ======================================================================
+        function modificarCantidad(varianteId, delta) {
+            const item = cartItems.find(i => i.varianteId === varianteId);
+            if (!item) return;
+
+            const nuevaCant = item.cantidad + delta;
+
+            if (nuevaCant <= 0) {
+                removerItemCarrito(varianteId);
+                return;
+            }
+
+            if (nuevaCant > item.stock) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Límite de inventario',
+                    text: `No hay más stock disponible para esta prenda (${item.stock} uds máx).`,
+                    confirmButtonColor: '#0284c7'
+                });
+                return;
+            }
+
+            item.cantidad = nuevaCant;
+            renderizarCarrito();
+        }
+
+        function removerItemCarrito(varianteId) {
+            cartItems = cartItems.filter(i => i.varianteId !== varianteId);
+            renderizarCarrito();
+        }
+
+        function limpiarCarritoCompleto(preguntar = false) {
+            if (cartItems.length === 0) return;
+
+            if (preguntar) {
+                Swal.fire({
+                    title: '¿Vaciar venta actual?',
+                    text: 'Se eliminarán todas las prendas agregadas al ticket.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Sí, vaciar',
+                    cancelButtonText: 'Cancelar'
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        cartItems = [];
+                        renderizarCarrito();
+                    }
+                });
+            } else {
+                cartItems = [];
+                renderizarCarrito();
+            }
+        }
+
+        // ======================================================================
+        // RENDERIZAR TABLA Y CALCULAR SUBTOTAL, ITBIS Y TOTAL
+        // ======================================================================
+        function renderizarCarrito() {
+            const tbody = document.getElementById('cartTableBody');
+            const emptyView = document.getElementById('cartEmptyView');
+            const cartTable = document.getElementById('cartTable');
+            const btnFinish = document.getElementById('btnFinalizarVenta');
+            const badgeCount = document.getElementById('cartCountBadge');
+
+            tbody.innerHTML = '';
+
+            if (cartItems.length === 0) {
+                emptyView.classList.remove('d-none');
+                cartTable.classList.add('d-none');
+                btnFinish.disabled = true;
+                badgeCount.textContent = '0 artículos';
+
+                document.getElementById('lblSubtotal').textContent = 'RD$ 0.00';
+                document.getElementById('lblItbis').textContent = 'RD$ 0.00';
+                document.getElementById('lblTotal').textContent = 'RD$ 0.00';
+                document.getElementById('txtMontoRecibido').value = '';
+                document.getElementById('lblCambio').textContent = 'RD$ 0.00';
+                document.getElementById('lblCambio').classList.remove('insufficient');
+                return;
+            }
+
+            emptyView.classList.add('d-none');
+            cartTable.classList.remove('d-none');
+            btnFinish.disabled = false;
+
+            let totalArticulos = 0;
+            let subtotal = 0;
+            let itbis = 0;
+
+            cartItems.forEach(item => {
+                const subLinea = item.precio * item.cantidad;
+                subtotal += subLinea;
+
+                if (item.aplicaImpuesto) {
+                    itbis += subLinea * (item.porcentajeImpuesto / 100);
+                }
+
+                totalArticulos += item.cantidad;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:38px; height:38px; border-radius:8px; overflow:hidden; background:#f1f5f9; flex-shrink:0; border: 1px solid var(--dc-border);">
+                                <img src="${item.foto || '/images/defaults/product-placeholder.png'}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null; this.src='/images/defaults/product-placeholder.png';" />
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="fw-bold text-dark text-truncate" style="max-width: 170px;" title="${item.nombre}">${item.nombre}</div>
+                                <small class="text-muted" style="font-size:11px;">Talla: ${item.talla} · ${item.color}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="pos-qty-group">
+                            <button type="button" class="pos-qty-btn" onclick="modificarCantidad('${item.varianteId}', -1)">-</button>
+                            <span class="pos-qty-val">${item.cantidad}</span>
+                            <button type="button" class="pos-qty-btn" onclick="modificarCantidad('${item.varianteId}', 1)">+</button>
+                        </div>
+                    </td>
+                    <td class="text-end fw-semibold">RD$ ${item.precio.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td class="text-end fw-bold text-dark">RD$ ${subLinea.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td class="text-center">
+                        <button type="button" class="pos-btn-del" onclick="removerItemCarrito('${item.varianteId}')" title="Eliminar">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const total = subtotal + itbis;
+            badgeCount.textContent = `${totalArticulos} ${totalArticulos === 1 ? 'artículo' : 'artículos'}`;
+
+            document.getElementById('lblSubtotal').textContent = `RD$ ${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('lblItbis').textContent = `RD$ ${itbis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('lblTotal').textContent = `RD$ ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            // Si es efectivo y el monto recibido está vacío o menor al total, rellenar sugerencia
+            const txtRecibido = document.getElementById('txtMontoRecibido');
+            if (metodoPagoActual === 1) {
+                if (!txtRecibido.value || parseFloat(txtRecibido.value) < total) {
+                    txtRecibido.value = total.toFixed(2);
+                }
+            } else {
+                txtRecibido.value = total.toFixed(2);
+            }
+
+            calcularCambioAutomatico();
+        }
+
+        // ======================================================================
+        // ELEGIR EFECTIVO, TARJETA O TRANSFERENCIA
+        // ======================================================================
+        function setPaymentMethod(methodId) {
+            metodoPagoActual = methodId;
+
+            document.querySelectorAll('.pos-pay-btn').forEach(btn => {
+                const id = parseInt(btn.getAttribute('data-method'));
+                if (id === methodId) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            const cashArea = document.getElementById('cashCalcArea');
+            const txtRecibido = document.getElementById('txtMontoRecibido');
+            const total = obtenerTotalNumerico();
+
+            if (methodId === 1) {
+                // Efectivo: permitir editar monto recibido
+                cashArea.style.opacity = '1';
+                txtRecibido.readOnly = false;
+                if (!txtRecibido.value || parseFloat(txtRecibido.value) < total) {
+                    txtRecibido.value = total > 0 ? total.toFixed(2) : '';
+                }
+            } else {
+                // Tarjeta o Transferencia: monto recibido siempre igual al total
+                txtRecibido.value = total > 0 ? total.toFixed(2) : '';
+                txtRecibido.readOnly = true;
+            }
+
+            calcularCambioAutomatico();
+        }
+
+        // ======================================================================
+        // CALCULAR EL CAMBIO AUTOMÁTICAMENTE
+        // ======================================================================
+        function calcularCambioAutomatico() {
+            const total = obtenerTotalNumerico();
+            const txtRecibido = document.getElementById('txtMontoRecibido');
+            const lblCambio = document.getElementById('lblCambio');
+
+            const recibido = parseFloat(txtRecibido.value) || 0;
+
+            if (total <= 0) {
+                lblCambio.textContent = 'RD$ 0.00';
+                lblCambio.classList.remove('insufficient');
+                return;
+            }
+
+            if (recibido >= total) {
+                const cambio = recibido - total;
+                lblCambio.textContent = `RD$ ${cambio.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                lblCambio.classList.remove('insufficient');
+            } else {
+                const falta = total - recibido;
+                lblCambio.textContent = `Faltan RD$ ${falta.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                lblCambio.classList.add('insufficient');
+            }
+        }
+
+        document.getElementById('txtMontoRecibido').addEventListener('input', calcularCambioAutomatico);
+
+        function obtenerTotalNumerico() {
+            let subtotal = 0;
+            let itbis = 0;
+            cartItems.forEach(item => {
+                const sub = item.precio * item.cantidad;
+                subtotal += sub;
+                if (item.aplicaImpuesto) {
+                    itbis += sub * (item.porcentajeImpuesto / 100);
+                }
+            });
+            return subtotal + itbis;
+        }
+
+        // ======================================================================
+        // FINALIZAR VENTA E IMPRIMIR EL TICKET
+        // ======================================================================
+        async function procesarCobroVenta() {
+            if (cartItems.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Ticket vacío',
+                    text: 'Agregue al menos una prenda antes de cobrar.',
+                    confirmButtonColor: '#0284c7'
+                });
+                return;
+            }
+
+            const total = obtenerTotalNumerico();
+            const txtRecibido = document.getElementById('txtMontoRecibido');
+            const recibido = parseFloat(txtRecibido.value) || 0;
+
+            if (metodoPagoActual === 1 && recibido < total - 0.05) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Monto insuficiente',
+                    text: `El monto recibido en efectivo (RD$ ${recibido.toFixed(2)}) es menor al total a cobrar (RD$ ${total.toFixed(2)}).`,
+                    confirmButtonColor: '#0284c7'
+                });
+                txtRecibido.focus();
+                return;
+            }
+
+            const clienteId = document.getElementById('posClienteSelect').value;
+            const btnFinish = document.getElementById('btnFinalizarVenta');
+            btnFinish.disabled = true;
+            btnFinish.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Facturando...';
+
+            let refPago = '';
+            if (metodoPagoActual === 1) {
+                const cambio = recibido >= total ? (recibido - total) : 0;
+                refPago = `RECIBIDO:${recibido.toFixed(2)}|CAMBIO:${cambio.toFixed(2)}`;
+            } else if (metodoPagoActual === 2) {
+                refPago = 'Tarjeta';
+            } else if (metodoPagoActual === 4) {
+                refPago = 'Transferencia Bancaria';
+            } else {
+                refPago = 'Otro medio';
+            }
+
+            // Payload para la API
+            const payload = {
+                clienteId: clienteId ? clienteId : null,
+                tipoComprobante: 2, // FacturaConsumo / Ticket Interno
+                items: cartItems.map(i => ({
+                    productoVarianteId: i.varianteId,
+                    cantidad: i.cantidad,
+                    porcentajeDescuento: 0
+                })),
+                pagos: [
+                    {
+                        metodoPago: metodoPagoActual,
+                        monto: total,
+                        referencia: refPago
+                    }
+                ]
+            };
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+            try {
+                const response = await fetch('/Pos/ProcesarVenta', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    ultimoTicketHtml = data.ticketHtml;
+
+                    // Actualizar stock visual en tiempo real en las tarjetas del catálogo
+                    const itemsVendidos = data.itemsVendidos || (payload && payload.items ? payload.items : []);
+                    itemsVendidos.forEach(item => {
+                        const card = document.querySelector(`.pos-item-card[data-variante-id="${item.productoVarianteId}"]`);
+                        if (card) {
+                            const actual = parseInt(card.getAttribute('data-stock')) || 0;
+                            const nuevo = Math.max(0, actual - item.cantidad);
+                            card.setAttribute('data-stock', nuevo);
+                            const stockEl = card.querySelector('.pos-item-stock');
+                            if (stockEl) {
+                                if (nuevo > 0) {
+                                    stockEl.textContent = `${nuevo} uds en stock`;
+                                } else {
+                                    stockEl.textContent = 'Agotado';
+                                    stockEl.classList.remove('text-muted');
+                                    stockEl.classList.add('text-danger', 'fw-bold');
+                                    card.style.opacity = '0.55';
+                                    card.style.cursor = 'not-allowed';
+                                }
+                            }
+                        }
+                    });
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Venta completada!',
+                        html: `Factura <b>#${data.numeroFactura}</b> procesada correctamente.<br>Total: <b>RD$ ${parseFloat(data.total).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>`,
+                        showCancelButton: true,
+                        confirmButtonColor: '#0284c7',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: '<i class="bi bi-printer me-1"></i> Imprimir Ticket',
+                        cancelButtonText: 'Nueva Venta'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            mostrarModalTicket(data.ticketHtml);
+                        }
+                    });
+
+                    // Limpiar carrito para el siguiente cliente
+                    cartItems = [];
+                    renderizarCarrito();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No se pudo procesar la venta',
+                        text: data.message || 'Ocurrió un error al registrar la venta.',
+                        confirmButtonColor: '#0284c7'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de comunicación',
+                    text: 'Ocurrió un error al contactar al servidor. Por favor verifique su conexión.',
+                    confirmButtonColor: '#0284c7'
+                });
+            } finally {
+                btnFinish.disabled = false;
+                btnFinish.innerHTML = '<i class="bi bi-check-circle-fill"></i><span>Finalizar Venta</span>';
+            }
+        }
+
+        // ======================================================================
+        // IMPRESIÓN DEL COMPROBANTE TÉRMICO
+        // ======================================================================
+        function mostrarModalTicket(ticketHtml) {
+            document.getElementById('ticketContainer').innerHTML = ticketHtml;
+            const modal = new bootstrap.Modal(document.getElementById('modalTicket'));
+            modal.show();
+        }
+
+        function imprimirTicketIframe() {
+            const container = document.getElementById('ticketContainer');
+            const iframe = document.getElementById('printIframe');
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(container.innerHTML);
+            doc.close();
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        }
+
+        function reimprimirUltimoTicket() {
+            if (!ultimoTicketHtml) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No hay ventas recientes',
+                    text: 'No se ha procesado ninguna venta en esta sesión para reimprimir.',
+                    confirmButtonColor: '#0284c7'
+                });
+                return;
+            }
+            mostrarModalTicket(ultimoTicketHtml);
+        }
+
+        function limpiarCampos() {
+            document.getElementById('posSearchInput').value = '';
+            categoriaSeleccionada = 'ALL';
+            document.querySelectorAll('.pos-cat-pill').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-cat') === 'ALL');
+            });
+            filtrarCatalogo();
+            cartItems = [];
+            renderizarCarrito();
+        }
+
+        // ======================================================================
+        // FILTRO DE CATÁLOGO (BÚSQUEDA Y CATEGORÍAS)
+        // ======================================================================
+        let categoriaSeleccionada = 'ALL';
+
+        document.getElementById('posSearchInput').addEventListener('input', filtrarCatalogo);
+
+        document.getElementById('btnClearSearch').addEventListener('click', () => {
+            document.getElementById('posSearchInput').value = '';
+            filtrarCatalogo();
+            document.getElementById('posSearchInput').focus();
+        });
+
+        document.querySelectorAll('.pos-cat-pill').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.pos-cat-pill').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                categoriaSeleccionada = this.getAttribute('data-cat');
+                filtrarCatalogo();
+            });
+        });
+
+        function filtrarCatalogo() {
+            const query = (document.getElementById('posSearchInput').value || '').trim().toLowerCase();
+            const cards = document.querySelectorAll('.prod-card');
+            let visibles = 0;
+
+            cards.forEach(card => {
+                const nombre = card.getAttribute('data-nombre').toLowerCase();
+                const codigo = card.getAttribute('data-codigo');
+                const sku = card.getAttribute('data-sku').toLowerCase();
+                const categoria = card.getAttribute('data-categoria');
+
+                const matchCat = (categoriaSeleccionada === 'ALL' || categoria === categoriaSeleccionada);
+                const matchQuery = (!query || nombre.includes(query) || codigo.includes(query) || sku.includes(query) || categoria.toLowerCase().includes(query));
+
+                if (matchCat && matchQuery) {
+                    card.style.display = 'flex';
+                    visibles++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const noFound = document.getElementById('noProductsFound');
+            if (cards.length > 0 && visibles === 0) {
+                noFound.classList.remove('d-none');
+            } else {
+                noFound.classList.add('d-none');
+            }
+        }
+
+        // ======================================================================
+        // ATAJOS DE TECLADO (F2: BÚSQUEDA, F4: COBRAR)
+        // ======================================================================
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'F2') {
+                e.preventDefault();
+                document.getElementById('posSearchInput').focus();
+            }
+            if (e.key === 'F4') {
+                e.preventDefault();
+                procesarCobroVenta();
+            }
+        });
+    </script>
+}

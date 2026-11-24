@@ -1,0 +1,569 @@
+@inject DC_BOUTIQUE.WEBAPP.Middlewares.ValidateUserSession UserSession
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Dahiana Corporan Boutique</title>
+
+    <!-- Tipografías Modernas y Claras -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 & Bootstrap Icons -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+
+    <!-- Estilos Limpios en Azul Cielo y Blanco Hueso -->
+    <style>
+        :root {
+            /* Paleta Azul Cielo & Blanco Hueso */
+            --dc-sky: #0284c7;          /* Azul Cielo Principal */
+            --dc-sky-light: #38bdf8;    /* Azul Cielo Claro */
+            --dc-sky-hover: #0369a1;    /* Azul Cielo Oscuro para Hover */
+            --dc-sky-bg: #e0f2fe;       /* Fondo suave celeste */
+            --dc-sky-subtle: #f0f9ff;   /* Fondo muy tenue */
+            --dc-sky-border: #bae6fd;   /* Borde celeste */
+
+            --dc-bg: #f8fafc;           /* Fondo general blanco hueso / gris clarísimo */
+            --dc-bone: #f1f5f9;         /* Blanco hueso para contrastes sutiles */
+            --dc-surface: #ffffff;      /* Superficie blanca para tarjetas */
+            --dc-border: #e2e8f0;       /* Bordes nítidos y elegantes */
+            
+            --dc-text: #0f172a;         /* Texto principal pizarra oscuro */
+            --dc-text-muted: #64748b;   /* Texto secundario / gris medio */
+            
+            /* Compatibilidad con clases existentes */
+            --dc-gold: #0284c7;
+            --dc-gold-light: #38bdf8;
+            --dc-cream: #f8fafc;
+            --dc-marble: #f1f5f9;
+            --dc-dark: #0f172a;
+            --dc-dark-accent: #1e293b;
+            --dc-gray: #64748b;
+
+            --sidebar-width: 250px;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--dc-bg);
+            color: var(--dc-text);
+            margin: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Lock de viewport para el Punto de Venta (evita scroll general de la ventana) */
+        html:has(.pos-screen-wrapper), body:has(.pos-screen-wrapper) {
+            overflow: hidden !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+        }
+
+        .dc-content:has(.pos-screen-wrapper) {
+            height: calc(100vh - 60px) !important;
+            max-height: calc(100vh - 60px) !important;
+            overflow: hidden !important;
+            padding: 8px 14px !important;
+        }
+
+        /* Topbar de Aplicación */
+        .dc-topbar {
+            height: 60px;
+            background-color: #ffffff;
+            color: var(--dc-text);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            border-bottom: 1px solid var(--dc-border);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+        }
+
+        .dc-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--dc-text);
+        }
+
+        .dc-brand-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--dc-sky), var(--dc-sky-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #ffffff;
+            font-size: 15px;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+            letter-spacing: -0.5px;
+        }
+
+        .dc-brand-text {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            color: var(--dc-text);
+        }
+
+        .dc-brand-subtitle {
+            color: var(--dc-sky);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .dc-topbar-pills {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dc-pill {
+            background-color: var(--dc-bone);
+            border: 1px solid var(--dc-border);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12.5px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--dc-text);
+        }
+
+        .dc-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            display: inline-block;
+        }
+
+        /* Sidebar Administrativo / Menú Lateral */
+        .dc-sidebar {
+            width: var(--sidebar-width);
+            background-color: #ffffff;
+            position: fixed;
+            top: 60px;
+            bottom: 0;
+            left: 0;
+            z-index: 1020;
+            padding: 16px 12px;
+            overflow-y: auto;
+            border-right: 1px solid var(--dc-border);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .dc-nav-section-title {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--dc-text-muted);
+            padding: 12px 14px 4px 14px;
+        }
+
+        .dc-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 14px;
+            color: #334155;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            margin-bottom: 2px;
+        }
+
+        .dc-nav-item:hover {
+            background-color: var(--dc-sky-subtle);
+            color: var(--dc-sky-hover);
+        }
+
+        .dc-nav-item.active {
+            background-color: var(--dc-sky-bg);
+            color: var(--dc-sky-hover);
+            font-weight: 600;
+            border-left: 3px solid var(--dc-sky);
+        }
+
+        .dc-nav-item i {
+            font-size: 17px;
+            color: var(--dc-sky);
+        }
+
+        /* Botón Destacado POS en el Menú */
+        .dc-nav-pos-btn {
+            background: linear-gradient(135deg, var(--dc-sky), var(--dc-sky-light));
+            color: #ffffff !important;
+            font-weight: 700;
+            margin: 4px 4px 14px 4px;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+            border-radius: 10px;
+            padding: 11px 14px;
+        }
+        .dc-nav-pos-btn:hover {
+            background: linear-gradient(135deg, var(--dc-sky-hover), var(--dc-sky));
+            color: #ffffff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
+        }
+        .dc-nav-pos-btn i {
+            color: #ffffff !important;
+            font-size: 18px;
+        }
+
+        /* Contenedor Principal */
+        .dc-content {
+            margin-left: var(--sidebar-width);
+            margin-top: 60px;
+            padding: 24px 28px;
+            min-height: calc(100vh - 60px);
+            width: calc(100% - var(--sidebar-width));
+            box-sizing: border-box;
+            background-color: var(--dc-bg);
+        }
+
+        /* Tarjetas Nítidas y Modernas */
+        .dc-card {
+            background-color: #ffffff;
+            border: 1px solid var(--dc-border);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            padding: 22px;
+            margin-bottom: 22px;
+        }
+
+        .dc-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--dc-border);
+        }
+
+        .dc-card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dc-text);
+            margin: 0;
+        }
+
+        /* Botones de Estilo Azul Cielo */
+        .btn-dc-sky, .btn-dc-gold, .btn-primary {
+            background: linear-gradient(135deg, var(--dc-sky), #0277b6);
+            border-color: var(--dc-sky);
+            color: #ffffff !important;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 8px 18px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2);
+        }
+        .btn-dc-sky:hover, .btn-dc-gold:hover, .btn-primary:hover {
+            background: linear-gradient(135deg, var(--dc-sky-hover), var(--dc-sky));
+            border-color: var(--dc-sky-hover);
+            color: #ffffff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+        }
+
+        .btn-dc-dark {
+            background-color: var(--dc-text);
+            border-color: var(--dc-text);
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 8px 16px;
+        }
+        .btn-dc-dark:hover {
+            background-color: #1e293b;
+            color: #ffffff;
+        }
+
+        .btn-outline-sky {
+            border: 1px solid var(--dc-sky);
+            color: var(--dc-sky);
+            background: transparent;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: all 0.2s;
+        }
+        .btn-outline-sky:hover {
+            background-color: var(--dc-sky-bg);
+            color: var(--dc-sky-hover);
+            border-color: var(--dc-sky);
+        }
+
+        /* Tablas Nítidas */
+        .table-dc {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .table-dc th {
+            background-color: var(--dc-bone);
+            color: var(--dc-text);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 14px;
+            border: none;
+        }
+        .table-dc td {
+            padding: 13px 14px;
+            border-bottom: 1px solid var(--dc-border);
+            font-size: 13.5px;
+            vertical-align: middle;
+        }
+        .table-dc tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* Estilo para Badges y Pastillas */
+        .badge-sky {
+            background-color: var(--dc-sky-bg);
+            color: var(--dc-sky-hover);
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <header class="dc-topbar">
+        <a asp-controller="Home" asp-action="Index" class="dc-brand">
+            <div class="dc-brand-logo">DC</div>
+            <div>
+                <span class="dc-brand-text">DAHIANA CORPORAN</span>
+                <span class="dc-brand-subtitle ms-1">Boutique</span>
+            </div>
+        </a>
+
+        <div class="dc-topbar-pills">
+            <div class="dc-pill">
+                <span class="dc-status-dot"></span>
+                <span>Caja 01 · Santo Domingo</span>
+            </div>
+
+            <div class="dc-pill" id="dcHeaderClock">
+                <i class="bi bi-clock text-primary"></i>
+                <span id="dcTime">--:--</span>
+            </div>
+
+            <!-- Botón Acceso Rápido POS -->
+            <a asp-controller="Pos" asp-action="Index" class="btn btn-sm btn-dc-sky px-3">
+                <i class="bi bi-cart4 me-1"></i> POS [F1]
+            </a>
+
+            <!-- Usuario Activo Dropdown en Barra Superior -->
+            @{
+                var activeUser = UserSession.GetUser();
+                var displayName = activeUser?.NombreCompleto ?? "Administrador";
+                var displayRole = activeUser != null ? (activeUser.Rol == DC_BOUTIQUE.Core.Domain.Common.Enums.RolUsuario.Administrador ? "Administrador" : "Cajero / Vendedor") : "Administrador";
+                var esAdmin = activeUser == null || activeUser.Rol == DC_BOUTIQUE.Core.Domain.Common.Enums.RolUsuario.Administrador;
+            }
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-light text-dark bg-white border d-flex align-items-center gap-2 px-3 py-1 dropdown-toggle shadow-sm" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px;">
+                    <i class="bi bi-person-circle fs-6" style="color: var(--dc-sky);"></i>
+                    <span class="fw-bold small">@displayName</span>
+                    <span class="badge bg-light text-primary border" style="font-size: 10px;">@displayRole</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border" aria-labelledby="userMenuDropdown" style="border-radius: 10px; min-width: 200px;">
+                    <li class="px-3 py-2 border-bottom bg-light">
+                        <div class="fw-bold small text-dark">@displayName</div>
+                        <div class="text-muted" style="font-size: 11px;">@displayRole</div>
+                    </li>
+                    <li>
+                        <a asp-controller="Auth" asp-action="Logout" class="dropdown-item text-danger d-flex align-items-center gap-2 py-2">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span class="fw-semibold">Cerrar Sesión</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR DE NAVEGACIÓN -->
+    <aside class="dc-sidebar">
+        <div>
+            <!-- Botón Principal Módulo de Cobro POS -->
+            <a asp-controller="Pos" asp-action="Index" class="dc-nav-item dc-nav-pos-btn">
+                <i class="bi bi-cart-check-fill"></i>
+                <span>Cobro / POS [F1]</span>
+            </a>
+
+            @if (esAdmin)
+            {
+                <div class="dc-nav-section-title">Operaciones Diarias</div>
+                <a asp-controller="Admin" asp-action="Index" class="dc-nav-item">
+                    <i class="bi bi-grid-1x2"></i>
+                    <span>Dashboard / Resumen</span>
+                </a>
+                <a asp-controller="Caja" asp-action="Index" class="dc-nav-item">
+                    <i class="bi bi-cash-stack"></i>
+                    <span>Caja & Turnos</span>
+                </a>
+                <a asp-controller="Caja" asp-action="Historial" class="dc-nav-item">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Historial de Cajas</span>
+                </a>
+                <a asp-controller="Pos" asp-action="Ventas" class="dc-nav-item">
+                    <i class="bi bi-receipt"></i>
+                    <span>Historial de Ventas</span>
+                </a>
+
+                <div class="dc-nav-section-title">Inventario & Catálogo</div>
+                <a asp-controller="Producto" asp-action="Index" class="dc-nav-item">
+                    <i class="bi bi-tag"></i>
+                    <span>Ropa & Accesorios</span>
+                </a>
+                <a asp-controller="Categoria" asp-action="Index" class="dc-nav-item">
+                    <i class="bi bi-folder2"></i>
+                    <span>Categorías</span>
+                </a>
+                <a asp-controller="Inventario" asp-action="EntradaRapida" class="dc-nav-item">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                    <span>Entrada Rápida Stock</span>
+                </a>
+                <a asp-controller="Inventario" asp-action="Kardex" class="dc-nav-item">
+                    <i class="bi bi-arrow-left-right"></i>
+                    <span>Kardex / Movimientos</span>
+                </a>
+
+                <div class="dc-nav-section-title">Clientes & Ajustes</div>
+                <a asp-controller="Cliente" asp-action="Index" class="dc-nav-item">
+                    <i class="bi bi-people"></i>
+                    <span>Clientes</span>
+                </a>
+                <a asp-controller="Usuario" asp-action="Index" class="dc-nav-item">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>Usuarios & Permisos</span>
+                </a>
+                <a asp-controller="Backup" asp-action="Index" class="dc-nav-item">
+                    <i class="bi bi-hdd-network"></i>
+                    <span>Base de Datos / Backup</span>
+                </a>
+            }
+            else
+            {
+                <!-- MENÚ EXCLUSIVO DE CAJERO / VENDEDOR -->
+                <div class="dc-nav-section-title">Terminal de Caja</div>
+                <a asp-controller="Caja" asp-action="Index" class="dc-nav-item">
+                    <i class="bi bi-cash-stack"></i>
+                    <span>Caja & Arqueo</span>
+                </a>
+                <a asp-controller="Caja" asp-action="Historial" class="dc-nav-item">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Historial de Cajas</span>
+                </a>
+                <a asp-controller="Pos" asp-action="Ventas" class="dc-nav-item">
+                    <i class="bi bi-receipt"></i>
+                    <span>Historial de Ventas</span>
+                </a>
+                <a asp-controller="Caja" asp-action="Cerrar" class="dc-nav-item text-danger">
+                    <i class="bi bi-lock-fill text-danger"></i>
+                    <span>Cuadre / Cerrar Turno</span>
+                </a>
+            }
+        </div>
+
+        <!-- Pie del Menú Lateral -->
+        <div class="pt-3 border-top text-center text-muted" style="border-color: var(--dc-border) !important; font-size:11px;">
+            <div class="fw-bold text-secondary">DC_BOUTIQUE v1.0</div>
+            <div style="font-size:10px;">República Dominicana</div>
+        </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="dc-content">
+        @RenderBody()
+    </main>
+
+    <!-- SCRIPTS BASE -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/js/pos-scanner.js" asp-append-version="true"></script>
+
+    <!-- Reloj y Atajos de Teclado -->
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('dcTime').textContent = timeStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Atajos de teclado del sistema
+        window.addEventListener('keydown', (e) => {
+            // F1: Abrir POS
+            if (e.key === 'F1') {
+                e.preventDefault();
+                window.location.href = '@Url.Action("Index", "Pos")';
+            }
+            // F2: Abrir Caja
+            if (e.key === 'F2') {
+                e.preventDefault();
+                window.location.href = '@Url.Action("Index", "Caja")';
+            }
+        });
+    </script>
+
+    <!-- SweetAlert2 Flash Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: '¡Operación Exitosa!',
+                html: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["SuccessMessage"]?.ToString() ?? "")),
+                confirmButtonColor: '#0284c7',
+                timer: 4000
+            });
+        </script>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: 'Atención',
+                html: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ErrorMessage"]?.ToString() ?? "")),
+                confirmButtonColor: '#0284c7'
+            });
+        </script>
+    }
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,185 @@
+@model List<DC_BOUTIQUE.Core.Application.ViewModels.Productos.ProductoViewModel>
+@{
+    ViewData["Title"] = "Catálogo de Ropa & Accesorios";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1" style="font-family:'Cormorant Garamond', serif;font-size:28px;">Catálogo de Prendas & Ropa</h1>
+        <p class="text-muted mb-0 small">Administración de modelos, precios, costos, variantes de tallas y colores.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <form asp-action="VaciarCatalogo" method="post" id="formVaciarCatalogo" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="button" class="btn btn-outline-danger shadow-sm btn-vaciar-catalogo" style="border-radius: 8px;">
+                <i class="bi bi-trash3 me-1"></i> Vaciar Catálogo
+            </button>
+        </form>
+        <a asp-action="CargarDemo" class="btn btn-outline-primary shadow-sm" style="border-radius: 8px;">
+            <i class="bi bi-magic me-1"></i> Cargar Prendas Demo con Fotos
+        </a>
+        <a asp-action="Create" class="btn btn-dc-sky shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i> Nueva Prenda
+        </a>
+    </div>
+</div>
+
+<div class="dc-card">
+    <div class="table-responsive">
+        <table class="table-dc align-middle">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">Foto</th>
+                    <th>Modelo / Código</th>
+                    <th>Nombre de Prenda</th>
+                    <th>Categoría</th>
+                    <th>Precio Venta</th>
+                    <th class="text-center">Variantes (Tallas/Color)</th>
+                    <th class="text-center">Stock Total</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(item.ImagenUrl))
+                                {
+                                    <img src="@item.ImagenUrl" alt="@item.Nombre" class="rounded shadow-sm" style="width: 52px; height: 52px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="rounded bg-light d-flex align-items-center justify-content-center text-muted" style="width: 52px; height: 52px; border: 1px dashed #ccc;">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-dark-subtle text-dark font-monospace">@item.CodigoModelo</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold">@item.Nombre</div>
+                                @if (!string.IsNullOrWhiteSpace(item.Marca))
+                                {
+                                    <small class="text-muted">Marca: @item.Marca</small>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@item.NombreCategoria</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">RD$ @item.PrecioVentaBase.ToString("N2")</div>
+                                @if (item.PrecioOferta.HasValue)
+                                {
+                                    <small class="text-danger fw-semibold">Oferta: RD$ @item.PrecioOferta.Value.ToString("N2")</small>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                    @foreach (var v in item.Variantes.Take(4))
+                                    {
+                                        <span class="badge bg-light text-dark border" style="font-size:11px;">
+                                            @v.Talla / @v.Color (@v.StockActual)
+                                        </span>
+                                    }
+                                    @if (item.Variantes.Count > 4)
+                                    {
+                                        <span class="badge bg-secondary" style="font-size:10px;">+@(item.Variantes.Count - 4) más</span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                @if (item.StockTotal <= 2)
+                                {
+                                    <span class="badge bg-danger fs-6">@item.StockTotal uds</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success-subtle text-success fs-6">@item.StockTotal uds</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark me-1" title="Editar prenda y tallas">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-confirm-delete" data-name="@item.Nombre" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-tag display-4 d-block mb-2 text-secondary"></i>
+                            No hay prendas registradas en el catálogo. ¡Agrega el primer producto!
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-confirm-delete').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const name = this.getAttribute('data-name');
+                const form = this.closest('form');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '¿Eliminar prenda?',
+                        text: `Se retirará "${name}" del catálogo de la boutique.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Sí, retirar',
+                        cancelButtonText: 'Cancelar'
+                    }).then((r) => {
+                        if (r.isConfirmed) form.submit();
+                    });
+                } else {
+                    if (confirm(`¿Estás segura de retirar "${name}" del catálogo de la boutique?`)) {
+                        form.submit();
+                    }
+                }
+            });
+        });
+        const btnVaciar = document.querySelector('.btn-vaciar-catalogo');
+        if (btnVaciar) {
+            btnVaciar.addEventListener('click', function(e) {
+                e.preventDefault();
+                const form = document.getElementById('formVaciarCatalogo');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '¿Vaciar catálogo completo?',
+                        text: 'Se eliminarán todos los productos y variantes de la base de datos.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Sí, vaciar catálogo',
+                        cancelButtonText: 'Cancelar'
+                    }).then((r) => {
+                        if (r.isConfirmed) form.submit();
+                    });
+                } else {
+                    if (confirm('¿Vaciar catálogo completo? Se eliminarán todos los productos de la base de datos.')) {
+                        form.submit();
+                    }
+                }
+            });
+        }
+    </script>
+}

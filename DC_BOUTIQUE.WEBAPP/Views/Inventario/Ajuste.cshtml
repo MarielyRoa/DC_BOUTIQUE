@@ -1,0 +1,82 @@
+@model DC_BOUTIQUE.Core.Application.ViewModels.Inventario.AjusteInventarioViewModel
+@{
+    ViewData["Title"] = "Ajuste de Existencias";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-7">
+        <div class="dc-card">
+            <div class="dc-card-header">
+                <div>
+                    <h4 class="dc-card-title">Ajuste de Conteo Físico</h4>
+                    <p class="text-muted small mb-0">Corrección de discrepancias en inventario tras conteo manual de prendas.</p>
+                </div>
+                <a asp-action="Kardex" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Ver Kardex
+                </a>
+            </div>
+
+            <form asp-action="Ajuste" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3 p-3 bg-light rounded border">
+                    <label class="label-categoria form-label fw-bold small text-uppercase text-secondary">
+                        <i class="bi bi-funnel me-1"></i> Categorías Predisponibles de la Boutique
+                    </label>
+                    <select class="form-select" id="filtroCategoria" onchange="window.location.href = this.value ? '?categoriaId=' + this.value : '@Url.Action("Ajuste")'">
+                        <option value="">-- Todas las Categorías --</option>
+                        @if (ViewBag.Categorias != null)
+                        {
+                            foreach (var cat in (SelectList)ViewBag.Categorias)
+                            {
+                                if (ViewBag.SelectedCategoriaId != null && ViewBag.SelectedCategoriaId.ToString() == cat.Value)
+                                {
+                                    <option value="@cat.Value" selected="selected">@cat.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@cat.Value">@cat.Text</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ProductoVarianteId" class="form-label fw-bold small text-uppercase">Prenda & Talla / Color a Ajustar *</label>
+                    <select asp-for="ProductoVarianteId" asp-items="ViewBag.Variantes" class="form-select form-select-lg" autofocus>
+                        <option value="">-- Seleccionar Prenda y Talla --</option>
+                    </select>
+                    <span asp-validation-for="ProductoVarianteId" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="StockRealContado" class="form-label fw-bold small text-uppercase">Nuevo Stock Real Contado Físicamente *</label>
+                    <div class="input-group input-group-lg">
+                        <input asp-for="StockRealContado" type="number" min="0" class="form-control fw-bold fs-4" />
+                        <span class="input-group-text bg-white">unidades reales</span>
+                    </div>
+                    <span asp-validation-for="StockRealContado" class="text-danger small"></span>
+                    <small class="text-muted" style="font-size:11px;">El sistema calculará automáticamente la diferencia positiva o negativa en el kardex.</small>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Motivo" class="form-label fw-bold small text-uppercase">Motivo del Ajuste *</label>
+                    <input asp-for="Motivo" class="form-control" placeholder="Ej. Conteo físico fin de mes, prenda manchada en probador, error de digitación previo..." required />
+                    <span asp-validation-for="Motivo" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Kardex" class="btn btn-outline-dark">Cancelar</a>
+                    <button type="submit" class="btn btn-warning px-4 py-2 fs-6 fw-bold">
+                        <i class="bi bi-sliders me-1"></i> Aplicar Ajuste
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

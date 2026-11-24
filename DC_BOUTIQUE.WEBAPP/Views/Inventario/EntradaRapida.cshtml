@@ -1,0 +1,99 @@
+@model DC_BOUTIQUE.Core.Application.ViewModels.Inventario.EntradaMercanciaRapidaViewModel
+@{
+    ViewData["Title"] = "Entrada Rápida de Mercancía";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-7">
+        <div class="dc-card">
+            <div class="dc-card-header">
+                <div>
+                    <h4 class="dc-card-title">Entrada Rápida de Mercancía</h4>
+                    <p class="text-muted small mb-0">Reabastecimiento directo de prendas y tallas sin órdenes de compra complejas.</p>
+                </div>
+                <a asp-action="Kardex" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Ver Kardex
+                </a>
+            </div>
+
+            <form asp-action="EntradaRapida" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3 p-3 bg-light rounded border">
+                    <label class="form-label fw-bold small text-uppercase text-secondary">
+                        <i class="bi bi-funnel me-1"></i> Categorías Predisponibles de la Boutique
+                    </label>
+                    <select class="form-select" id="filtroCategoria" onchange="window.location.href = this.value ? '?categoriaId=' + this.value : '@Url.Action("EntradaRapida")'">
+                        <option value="">-- Todas las Categorías --</option>
+                        @if (ViewBag.Categorias != null)
+                        {
+                            foreach (var cat in (SelectList)ViewBag.Categorias)
+                            {
+                                if (ViewBag.SelectedCategoriaId != null && ViewBag.SelectedCategoriaId.ToString() == cat.Value)
+                                {
+                                    <option value="@cat.Value" selected="selected">@cat.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@cat.Value">@cat.Text</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+
+                @if (ViewBag.Variantes == null || !((SelectList)ViewBag.Variantes).Any())
+                {
+                    <div class="alert alert-warning d-flex align-items-center justify-content-between p-3 mb-3">
+                        <div>
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <span>No hay prendas registradas en esta categoría para reabastecer stock.</span>
+                        </div>
+                        <a asp-controller="Producto" asp-action="Create" class="btn btn-sm btn-dark">
+                            <i class="bi bi-plus-lg me-1"></i> Crear Nueva Prenda
+                        </a>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label asp-for="ProductoVarianteId" class="form-label fw-bold small text-uppercase">Prenda & Talla / Color a Reabastecer *</label>
+                    <select asp-for="ProductoVarianteId" asp-items="ViewBag.Variantes" class="form-select form-select-lg" autofocus>
+                        <option value="">-- Seleccionar Prenda y Talla --</option>
+                    </select>
+                    <span asp-validation-for="ProductoVarianteId" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-6">
+                        <label asp-for="Cantidad" class="form-label fw-bold small text-uppercase">Cantidad Recibida *</label>
+                        <div class="input-group input-group-lg">
+                            <input asp-for="Cantidad" type="number" min="1" class="form-control fw-bold text-success" />
+                            <span class="input-group-text bg-white">unidades</span>
+                        </div>
+                        <span asp-validation-for="Cantidad" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label asp-for="DocumentoReferencia" class="form-label fw-bold small text-uppercase"># Factura / Remisión (Opcional)</label>
+                        <input asp-for="DocumentoReferencia" class="form-control form-control-lg" placeholder="Ej. REM-9821 o F-4021" />
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Motivo" class="form-label fw-bold small text-uppercase">Motivo / Proveedor</label>
+                    <input asp-for="Motivo" class="form-control" placeholder="Ej. Nuevo lote de temporada, confección recibida..." />
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-dark">Cancelar</a>
+                    <button type="submit" class="btn btn-dc-gold px-4 py-2 fs-6 shadow">
+                        <i class="bi bi-box-arrow-in-down me-1"></i> Registrar Entrada de Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

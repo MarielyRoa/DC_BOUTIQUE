@@ -1,0 +1,141 @@
+@model List<DC_BOUTIQUE.Core.Application.ViewModels.Ventas.VentaViewModel>
+@{
+    ViewData["Title"] = "Historial de Ventas";
+    var fechaSel = (DateTime)ViewBag.FechaSeleccionada;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1" style="font-family:'Cormorant Garamond', serif;font-size:28px;">Historial de Ventas</h1>
+        <p class="text-muted mb-0 small">Consulta de comprobantes emitidos, desglose de pagos y reimpresión de tickets.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <form method="get" asp-action="Ventas" class="d-flex gap-2">
+            <input type="date" name="fecha" value="@fechaSel.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            <button type="submit" class="btn btn-sm btn-outline-dark">Filtrar Fecha</button>
+        </form>
+        <a asp-action="Index" class="btn btn-sm btn-dc-gold">
+            <i class="bi bi-cart4 me-1"></i> Ir al POS
+        </a>
+    </div>
+</div>
+
+<div class="dc-card">
+    <div class="table-responsive">
+        <table class="table-dc">
+            <thead>
+                <tr>
+                    <th>Factura / NCF</th>
+                    <th>Hora</th>
+                    <th>Cliente</th>
+                    <th>Cajero</th>
+                    <th>Método(s) de Pago</th>
+                    <th>Estado</th>
+                    <th class="text-end">Total</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var v in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold">@v.NumeroFactura</div>
+                                @if (!string.IsNullOrWhiteSpace(v.Ncf))
+                                {
+                                    <span class="badge bg-light text-dark border">NCF: @v.Ncf</span>
+                                }
+                            </td>
+                            <td>@v.FechaVenta.ToString("hh:mm tt")</td>
+                            <td>@(string.IsNullOrWhiteSpace(v.NombreCliente) ? "Consumidor Final" : v.NombreCliente)</td>
+                            <td>@v.NombreUsuario</td>
+                            <td>
+                                @foreach (var p in v.Pagos)
+                                {
+                                    <span class="badge bg-light text-dark border me-1">@p.MetodoPago: RD$ @p.Monto.ToString("N2")</span>
+                                }
+                            </td>
+                            <td>
+                                @if (v.Estado == DC_BOUTIQUE.Core.Domain.Common.Enums.EstadoVenta.Completada)
+                                {
+                                    <span class="badge bg-success-subtle text-success">Completada</span>
+                                }
+                                else if (v.Estado == DC_BOUTIQUE.Core.Domain.Common.Enums.EstadoVenta.Anulada)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger">Anulada</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-subtle text-warning">@v.Estado</span>
+                                }
+                            </td>
+                            <td class="text-end fw-bold text-success fs-6">
+                                RD$ @v.TotalNeto.ToString("N2")
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="ImprimirTicket" asp-route-id="@v.Id" target="_blank" class="btn btn-sm btn-outline-dark me-1" title="Reimprimir Ticket">
+                                    <i class="bi bi-printer"></i>
+                                </a>
+                                @if (v.Estado == DC_BOUTIQUE.Core.Domain.Common.Enums.EstadoVenta.Completada)
+                                {
+                                    <form asp-action="AnularVenta" asp-route-id="@v.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-anular" data-fac="@v.NumeroFactura" title="Anular Venta">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-receipt display-4 d-block mb-2 text-secondary"></i>
+                            No hay ventas registradas para la fecha seleccionada (@fechaSel.ToString("dd/MM/yyyy")).
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-anular').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const fac = this.getAttribute('data-fac');
+                const form = this.closest('form');
+                Swal.fire({
+                    title: '¿Anular esta factura?',
+                    text: `Se anulará la factura "${fac}" y se reintegrará el stock de las prendas a la boutique.`,
+                    input: 'text',
+                    inputPlaceholder: 'Ingresa el motivo de anulación...',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#716C66',
+                    confirmButtonText: 'Sí, Anular Venta',
+                    cancelButtonText: 'Cancelar',
+                    inputValidator: (value) => {
+                        if (!value) return 'Debes ingresar un motivo.';
+                    }
+                }).then((r) => {
+                    if (r.isConfirmed) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'motivo';
+                        input.value = r.value;
+                        form.appendChild(input);
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}
