@@ -46,7 +46,7 @@
             --dc-dark-accent: #1e293b;
             --dc-gray: #64748b;
 
-            --sidebar-width: 275px;
+            --sidebar-width: 242px;
         }
 
         body {
@@ -54,7 +54,7 @@
             background-color: var(--dc-bg);
             color: var(--dc-text);
             margin: 0;
-            font-size: 15px;
+            font-size: 13.5px;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
@@ -67,21 +67,21 @@
         }
 
         .dc-content:has(.pos-screen-wrapper) {
-            height: calc(100vh - 60px) !important;
-            max-height: calc(100vh - 60px) !important;
+            height: calc(100vh - 56px) !important;
+            max-height: calc(100vh - 56px) !important;
             overflow: hidden !important;
             padding: 8px 14px !important;
         }
 
         /* Topbar de Aplicación */
         .dc-topbar {
-            height: 60px;
+            height: 56px;
             background-color: #ffffff;
             color: var(--dc-text);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 24px;
+            padding: 0 18px;
             position: fixed;
             top: 0;
             left: 0;
@@ -89,61 +89,68 @@
             z-index: 1030;
             border-bottom: 1px solid var(--dc-border);
             box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+            gap: 10px;
         }
 
         .dc-brand {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             text-decoration: none;
             color: var(--dc-text);
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .dc-brand-logo {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
             background: linear-gradient(135deg, var(--dc-sky), var(--dc-sky-light));
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
             color: #ffffff;
-            font-size: 15px;
+            font-size: 14px;
             box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
             letter-spacing: -0.5px;
+            flex-shrink: 0;
         }
 
         .dc-brand-text {
-            font-size: 17.5px;
+            font-size: 15px;
             font-weight: 700;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
             color: var(--dc-text);
         }
 
         .dc-brand-subtitle {
             color: var(--dc-sky);
             font-weight: 600;
-            font-size: 14px;
+            font-size: 12.5px;
         }
 
         .dc-topbar-pills {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
+            flex-shrink: 0;
         }
 
         .dc-pill {
             background-color: var(--dc-bone);
             border: 1px solid var(--dc-border);
-            padding: 6px 14px;
+            padding: 5px 11px;
             border-radius: 30px;
-            font-size: 13.5px;
+            font-size: 12.5px;
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             color: var(--dc-text);
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .dc-status-dot {
@@ -153,6 +160,7 @@
             background-color: #10b981;
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
             display: inline-block;
+            flex-shrink: 0;
         }
 
         /* Sidebar Administrativo / Menú Lateral */
@@ -160,11 +168,11 @@
             width: var(--sidebar-width);
             background-color: #ffffff;
             position: fixed;
-            top: 60px;
+            top: 56px;
             bottom: 0;
             left: 0;
             z-index: 1020;
-            padding: 16px 12px;
+            padding: 12px 10px;
             overflow-y: auto;
             border-right: 1px solid var(--dc-border);
             display: flex;
@@ -173,26 +181,27 @@
         }
 
         .dc-nav-section-title {
-            font-size: 11.5px;
+            font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.9px;
+            letter-spacing: 0.8px;
             color: var(--dc-text-muted);
-            padding: 14px 16px 5px 16px;
+            padding: 9px 12px 3px 12px;
         }
 
         .dc-nav-item {
             display: flex;
             align-items: center;
-            gap: 13px;
-            padding: 10px 16px;
+            gap: 10px;
+            padding: 7px 12px;
             color: #334155;
             text-decoration: none;
-            border-radius: 9px;
-            font-size: 15.5px; /* Menú más grande que las demás letras del sistema */
+            border-radius: 8px;
+            font-size: 14px; /* Menú ligeramente más grande y nítido que el resto de textos */
             font-weight: 600;
             transition: all 0.15s ease;
-            margin-bottom: 3px;
+            margin-bottom: 1px;
+            white-space: nowrap;
         }
 
         .dc-nav-item:hover {
@@ -204,28 +213,29 @@
             background-color: var(--dc-sky-bg);
             color: var(--dc-sky-hover);
             font-weight: 700;
-            border-left: 4px solid var(--dc-sky);
+            border-left: 3px solid var(--dc-sky);
         }
 
         .dc-nav-item i {
-            font-size: 20px;
+            font-size: 17px;
             color: var(--dc-sky);
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         /* Botón Destacado POS en el Menú */
         .dc-nav-pos-btn {
             background: linear-gradient(135deg, var(--dc-sky), var(--dc-sky-light));
             color: #ffffff !important;
-            font-size: 16.5px;
+            font-size: 14.5px;
             font-weight: 700;
-            margin: 4px 4px 14px 4px;
+            margin: 2px 4px 10px 4px;
             box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
-            border-radius: 12px;
-            padding: 12px 16px;
-            gap: 12px;
+            border-radius: 10px;
+            padding: 9px 14px;
+            gap: 10px;
         }
         .dc-nav-pos-btn:hover {
             background: linear-gradient(135deg, var(--dc-sky-hover), var(--dc-sky));
@@ -235,15 +245,15 @@
         }
         .dc-nav-pos-btn i {
             color: #ffffff !important;
-            font-size: 21px;
+            font-size: 18px;
         }
 
         /* Contenedor Principal */
         .dc-content {
             margin-left: var(--sidebar-width);
-            margin-top: 60px;
-            padding: 24px 28px;
-            min-height: calc(100vh - 60px);
+            margin-top: 56px;
+            padding: 18px 22px;
+            min-height: calc(100vh - 56px);
             width: calc(100% - var(--sidebar-width));
             box-sizing: border-box;
             background-color: var(--dc-bg);
@@ -269,7 +279,7 @@
         }
 
         .dc-card-title {
-            font-size: 19px;
+            font-size: 16.5px;
             font-weight: 700;
             color: var(--dc-text);
             margin: 0;
@@ -281,9 +291,9 @@
             border-color: var(--dc-sky);
             color: #ffffff !important;
             font-weight: 600;
-            font-size: 14.5px;
+            font-size: 13.5px;
             border-radius: 8px;
-            padding: 8.5px 18px;
+            padding: 7px 15px;
             transition: all 0.2s;
             box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2);
         }
@@ -300,9 +310,9 @@
             border-color: var(--dc-text);
             color: #ffffff;
             font-weight: 600;
-            font-size: 14.5px;
+            font-size: 13.5px;
             border-radius: 8px;
-            padding: 8.5px 16px;
+            padding: 7px 14px;
         }
         .btn-dc-dark:hover {
             background-color: #1e293b;
@@ -314,9 +324,9 @@
             color: var(--dc-sky);
             background: transparent;
             font-weight: 600;
-            font-size: 14.5px;
+            font-size: 13.5px;
             border-radius: 8px;
-            padding: 8.5px 16px;
+            padding: 7px 14px;
             transition: all 0.2s;
         }
         .btn-outline-sky:hover {
@@ -326,10 +336,10 @@
         }
 
         .form-control, .form-select {
-            font-size: 14.5px;
+            font-size: 13.5px;
         }
         .form-label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
         }
 
@@ -342,17 +352,17 @@
         .table-dc th {
             background-color: var(--dc-bone);
             color: var(--dc-text);
-            font-size: 13px;
+            font-size: 11.5px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 12px 14px;
+            padding: 10px 12px;
             border: none;
         }
         .table-dc td {
-            padding: 13px 14px;
+            padding: 11px 12px;
             border-bottom: 1px solid var(--dc-border);
-            font-size: 14.5px;
+            font-size: 13.5px;
             vertical-align: middle;
         }
         .table-dc tr:hover td {
@@ -385,11 +395,11 @@
             </a>
 
             <!-- MÓDULO ACTUAL AL LADO DEL NOMBRE (EN LA PRIMERA LÍNEA DE MENÚ) -->
-            <div class="d-none d-md-flex align-items-center gap-2 ps-3 border-start">
-                <span class="badge bg-light text-primary border px-2.5 py-1.5 fw-bold" style="font-size: 13.5px; border-radius: 8px;">
+            <div class="d-none d-lg-flex align-items-center gap-2 ps-3 border-start" style="white-space: nowrap;">
+                <span class="badge bg-light text-primary border px-2 py-1 fw-bold" style="font-size: 12px; border-radius: 8px;">
                     <i class="bi bi-cart4 text-primary me-1"></i> Punto de Venta — Módulo de Cobro
                 </span>
-                <span class="text-muted small d-none d-xl-inline">Terminal rápida de facturación</span>
+                <span class="text-muted small d-none d-xxl-inline">Terminal rápida de facturación</span>
             </div>
         </div>
 
@@ -406,13 +416,13 @@
             </div>
 
             <!-- Botón Cerrar Caja -->
-            <a asp-controller="Caja" asp-action="Index" class="btn btn-sm btn-danger text-white d-flex align-items-center gap-1.5 px-3 shadow-sm" title="Realizar Cuadre / Cerrar Turno" style="border-radius: 20px; font-weight: 700; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #dc2626;">
+            <a asp-controller="Caja" asp-action="Index" class="btn btn-sm btn-danger text-white d-flex align-items-center gap-1 px-3 shadow-sm" title="Realizar Cuadre / Cerrar Turno" style="border-radius: 20px; font-weight: 700; font-size: 12.5px; white-space: nowrap; background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #dc2626;">
                 <i class="bi bi-lock-fill text-white"></i>
                 <span class="text-white">Cerrar Caja</span>
             </a>
 
             <!-- Botón Acceso Rápido POS -->
-            <a asp-controller="Pos" asp-action="Index" class="btn btn-sm btn-dc-sky px-3" style="border-radius: 20px;">
+            <a asp-controller="Pos" asp-action="Index" class="btn btn-sm btn-dc-sky px-3" style="border-radius: 20px; font-size: 12.5px; padding: 5px 12px; white-space: nowrap;">
                 <i class="bi bi-cart4 me-1"></i> POS [F1]
             </a>
 

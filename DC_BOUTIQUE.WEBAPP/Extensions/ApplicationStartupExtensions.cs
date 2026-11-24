@@ -1,3 +1,4 @@
+using System.Data;
 using System.Diagnostics;
 using DC_BOUTIQUE.Core.Domain.Helpers;
 using DC_BOUTIQUE.Infrastructure.Identity.Contexts;
@@ -6,6 +7,7 @@ using DC_BOUTIQUE.Infrastructure.Identity.Seeds;
 using DC_BOUTIQUE.Infrastructure.Persistence;
 using DC_BOUTIQUE.Infrastructure.Persistence.Contexts;
 using DC_BOUTIQUE.WEBAPP.Middlewares;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -31,11 +33,16 @@ namespace DC_BOUTIQUE.WEBAPP.Extensions
         }
 
         /// <summary>
-        /// Registra MVC, Antiforgery y la sesión local de turno de caja (8 horas).
+        /// Registra MVC, Antiforgery, llaves persistentes de DataProtection y la sesión local de turno (8 horas).
         /// </summary>
         public static IServiceCollection AddWebAppServices(this IServiceCollection services)
         {
             services.AddControllersWithViews();
+
+            // Persistir llaves de cifrado de cookies en ProgramData para evitar advertencias de sesión entre reinicios
+            services.AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(DatabasePathHelper.GetDataProtectionKeysDirectory()))
+                .SetApplicationName("DC_BOUTIQUE");
 
             services.AddAntiforgery(options =>
             {
@@ -58,7 +65,7 @@ namespace DC_BOUTIQUE.WEBAPP.Extensions
 
         /// <summary>
         /// Crea e inicializa de forma segura la base de datos SQLite local en C:\ProgramData\DC_BOUTIQUE\Data,
-        /// conservando siempre los datos existentes si ya fue creada previamente.
+        /// verificando primero sqlite_master para no emitir errores de tablas duplicadas y conservando siempre los datos.
         /// </summary>
         public static async Task InitializeLocalDatabaseAsync(this WebApplication app)
         {
@@ -83,7 +90,11 @@ namespace DC_BOUTIQUE.WEBAPP.Extensions
                     {
                         await creator.CreateAsync();
                     }
-                    try { await creator.CreateTablesAsync(); } catch { }
+
+                    if (!await TableExistsInSqliteAsync(identityContext, "Roles"))
+                    {
+                        await creator.CreateTablesAsync();
+                    }
                 }
                 else
                 {
@@ -122,7 +133,8 @@ namespace DC_BOUTIQUE.WEBAPP.Extensions
         }
 
         /// <summary>
-        /// Abre automáticamente el navegador predeterminado al ejecutar el acceso directo instalado en Windows.
+        /// Abre DC_BOUTIQUE como una ventana de aplicación de escritorio independiente (modo --app sin pestañas
+        /// ni barra de direcciones) usando Microsoft Edge o Chrome, y detiene el servidor al cerrar la ventana.
         /// </summary>
         public static void LaunchBrowserOnLocalStart(this WebApplication app)
         {
@@ -130,13 +142,78 @@ namespace DC_BOUTIQUE.WEBAPP.Extensions
             {
                 app.Lifetime.ApplicationStarted.Register(() =>
                 {
-                    try
-                    {
-                        var url = app.Urls.FirstOrDefault() ?? "http://localhost:5055";
-                        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-                    }
-                    catch { }
+                    var url = app.Urls.FirstOrDefault() ?? "http://localhost:5055";
+                    OpenDesktopWindow(url, () => app.Lifetime.StopApplication());
                 });
+            }
+        }
+
+        public static void OpenDesktopWindow(string url, Action? onWindowClosed = null)
+        {
+            try
+            {
+                var profileDir = DatabasePathHelper.GetAppWindowProfileDirectory();
+                var browserExe = FindDesktopWebViewBrowser();
+
+                if (!string.IsNullOrEmpty(browserExe))
+                {
+                    var proc = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = browserExe,
+                        Arguments = $"--app=\"{url}\" --user-data-dir=\"{profileDir}\" --start-maximized --no-first-run --no-default-browser-check",
+                        UseShellExecute = false
+                    });
+
+                    if (proc != null && onWindowClosed != null)
+                    {
+                        proc.EnableRaisingEvents = true;
+                        proc.Exited += (_, _) => onWindowClosed();
+                    }
+                }
+                else
+                {
+                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                }
+            }
+            catch
+            {
+                // No interrumpir el servidor si falla el lanzamiento automático
+            }
+        }
+
+        private static string? FindDesktopWebViewBrowser()
+        {
+            var candidates = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Microsoft\Edge\Application\msedge.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"Microsoft\Edge\Application\msedge.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"Google\Chrome\Application\chrome.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Google\Chrome\Application\chrome.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Google\Chrome\Application\chrome.exe")
+            };
+
+            return candidates.FirstOrDefault(File.Exists);
+        }
+
+        private static async Task<bool> TableExistsInSqliteAsync(DbContext context, string tableName)
+        {
+            var conn = context.Database.GetDbConnection();
+            var shouldClose = conn.State != ConnectionState.Open;
+            if (shouldClose) await conn.OpenAsync();
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=@name;";
+                var param = cmd.CreateParameter();
+                param.ParameterName = "@name";
+                param.Value = tableName;
+                cmd.Parameters.Add(param);
+                var count = Convert.ToInt64(await cmd.ExecuteScalarAsync());
+                return count > 0;
+            }
+            finally
+            {
+                if (shouldClose) await conn.CloseAsync();
             }
         }
     }

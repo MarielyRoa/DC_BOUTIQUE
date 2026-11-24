@@ -36,9 +36,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Crear carpetas en C:\ProgramData\DC_BOUTIQUE con permisos completos para lectura y escritura de usuarios
 Name: "{commonappdata}\{#MyAppName}"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\Data"; Permissions: users-full
+Name: "{commonappdata}\{#MyAppName}\Data\Keys"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\Backups"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\Images"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\Images\productos"; Permissions: users-full
+Name: "{commonappdata}\{#MyAppName}\AppWindowProfile"; Permissions: users-full
 
 [Files]
 ; Archivos publicados de la aplicación (.NET self-contained win-x64)

@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <NuGetAudit>false</NuGetAudit>
+    <!-- En Release (instalador) ocultar la ventana negra de consola para abrirse como aplicación de escritorio limpia -->
+    <OutputType Condition="'$(Configuration)' == 'Release'">WinExe</OutputType>
+    <ApplicationIcon>wwwroot\favicon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

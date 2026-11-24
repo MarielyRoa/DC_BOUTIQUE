@@ -20,13 +20,12 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence
                 {
                     await creator.CreateAsync();
                 }
-                try
+
+                // Verificar en sqlite_master si las tablas de negocio ya existen antes de crearlas (evita errores en consola)
+                bool tablasExisten = await TableExistsInSqliteAsync(context, "Categorias");
+                if (!tablasExisten)
                 {
                     await creator.CreateTablesAsync();
-                }
-                catch
-                {
-                    // Las tablas de negocio ya existen; se preservan todos sus datos intactos
                 }
             }
             else
@@ -96,6 +95,28 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence
             }
 
             await context.SaveChangesAsync();
+        }
+
+        private static async Task<bool> TableExistsInSqliteAsync(DbContext context, string tableName)
+        {
+            var conn = context.Database.GetDbConnection();
+            var shouldClose = conn.State != System.Data.ConnectionState.Open;
+            if (shouldClose) await conn.OpenAsync();
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=@name;";
+                var param = cmd.CreateParameter();
+                param.ParameterName = "@name";
+                param.Value = tableName;
+                cmd.Parameters.Add(param);
+                var count = Convert.ToInt64(await cmd.ExecuteScalarAsync());
+                return count > 0;
+            }
+            finally
+            {
+                if (shouldClose) await conn.CloseAsync();
+            }
         }
 
         private static string HashPassword(string password)

@@ -75,6 +75,28 @@ namespace DC_BOUTIQUE.Core.Domain.Helpers
         }
 
         /// <summary>
+        /// Carpeta persistente para llaves de cifrado de sesiones (evita advertencias de cookies entre reinicios):
+        /// C:\ProgramData\DC_BOUTIQUE\Data\Keys
+        /// </summary>
+        public static string GetDataProtectionKeysDirectory()
+        {
+            var dir = Path.Combine(GetDataDirectory(), "Keys");
+            EnsureDirectoryExists(dir);
+            return dir;
+        }
+
+        /// <summary>
+        /// Perfil aislado para la ventana de escritorio de DC_BOUTIQUE (sin pestañas ni barra de navegador):
+        /// C:\ProgramData\DC_BOUTIQUE\AppWindowProfile
+        /// </summary>
+        public static string GetAppWindowProfileDirectory()
+        {
+            var dir = Path.Combine(GetBaseApplicationDataDirectory(), "AppWindowProfile");
+            EnsureDirectoryExists(dir);
+            return dir;
+        }
+
+        /// <summary>
         /// Cadena de conexión de SQLite generada dinámicamente.
         /// </summary>
         public static string GetSqliteConnectionString()

@@ -17,8 +17,8 @@
     }
 
     .dc-content {
-        height: calc(100vh - 60px) !important;
-        max-height: calc(100vh - 60px) !important;
+        height: calc(100vh - 56px) !important;
+        max-height: calc(100vh - 56px) !important;
         overflow: hidden !important;
         padding: 10px 18px !important;
         box-sizing: border-box !important;
@@ -94,7 +94,7 @@
         height: 100%;
         max-height: 100%;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 560px;
+        grid-template-columns: minmax(0, 1fr) clamp(430px, 38vw, 520px);
         grid-template-rows: minmax(0, 1fr);
         gap: 14px;
         width: 100%;
@@ -288,6 +288,44 @@
         justify-content: center;
         overflow: hidden;
         margin-bottom: 10px;
+        position: relative;
+    }
+
+    .pos-offer-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 4px 9px;
+        border-radius: 20px;
+        letter-spacing: 0.3px;
+        box-shadow: 0 3px 10px rgba(220, 38, 38, 0.35);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        z-index: 2;
+    }
+
+    .pos-item-price-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.15;
+        margin-bottom: 3px;
+    }
+
+    .pos-item-price-old {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #94a3b8;
+        text-decoration: line-through;
+    }
+
+    .pos-item-price-offer {
+        color: #dc2626 !important;
     }
 
     .pos-item-img {
@@ -809,7 +847,11 @@
                 {
                     @foreach (var prod in productos)
                     {
-                        var precioEfectivo = prod.PrecioOferta ?? prod.PrecioVentaBase;
+                        var tieneOferta = prod.PrecioOferta.HasValue && prod.PrecioOferta.Value > 0;
+                        var precioEfectivo = tieneOferta ? prod.PrecioOferta!.Value : prod.PrecioVentaBase;
+                        var porcentajeDescuento = (tieneOferta && prod.PrecioVentaBase > 0 && prod.PrecioOferta!.Value < prod.PrecioVentaBase)
+                            ? (int)Math.Round(((prod.PrecioVentaBase - prod.PrecioOferta.Value) / prod.PrecioVentaBase) * 100m)
+                            : 0;
                         var primeraVariante = prod.Variantes.FirstOrDefault();
                         var varianteId = primeraVariante?.Id ?? Guid.Empty;
                         var varianteSku = primeraVariante?.Sku ?? prod.CodigoModelo;
@@ -824,7 +866,9 @@
                              data-nombre="@prod.Nombre"
                              data-codigo="@prod.CodigoModelo.ToLowerInvariant()"
                              data-categoria="@prod.NombreCategoria"
-                             data-precio="@precioEfectivo"
+                             data-precio="@precioEfectivo.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                             data-precio-base="@prod.PrecioVentaBase.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                             data-tiene-oferta="@(tieneOferta ? "1" : "0")"
                              data-sku="@varianteSku"
                              data-talla="@varianteTalla"
                              data-color="@varianteColor"
@@ -836,11 +880,28 @@
                              onclick="onProductCardClicked(this)">
                             
                             <div class="pos-item-img-wrap">
+                                @if (tieneOferta)
+                                {
+                                    <span class="pos-offer-badge">
+                                        <i class="bi bi-tag-fill"></i>
+                                        @(porcentajeDescuento > 0 ? $"OFERTA -{porcentajeDescuento}%" : "OFERTA")
+                                    </span>
+                                }
                                 <img src="@foto" alt="@prod.Nombre" class="pos-item-img" onerror="this.onerror=null; this.src='/images/defaults/product-placeholder.svg';" />
                             </div>
 
                             <div class="pos-item-name" title="@prod.Nombre">@prod.Nombre</div>
-                            <div class="pos-item-price">RD$ @precioEfectivo.ToString("N2")</div>
+                            @if (tieneOferta)
+                            {
+                                <div class="pos-item-price-group">
+                                    <div class="pos-item-price-old">RD$ @prod.PrecioVentaBase.ToString("N2")</div>
+                                    <div class="pos-item-price pos-item-price-offer">RD$ @precioEfectivo.ToString("N2")</div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="pos-item-price">RD$ @precioEfectivo.ToString("N2")</div>
+                            }
                             <div class="pos-item-stock">@stock uds en stock</div>
                         </div>
                     }
@@ -1043,6 +1104,8 @@
             const varianteId = card.getAttribute('data-variante-id');
             const nombre = card.getAttribute('data-nombre');
             const precio = parseFloat(card.getAttribute('data-precio')) || 0;
+            const precioBase = parseFloat(card.getAttribute('data-precio-base')) || precio;
+            const tieneOferta = card.getAttribute('data-tiene-oferta') === '1';
             const sku = card.getAttribute('data-sku') || '';
             const talla = card.getAttribute('data-talla') || 'ÚNICA';
             const color = card.getAttribute('data-color') || 'General';
@@ -1065,6 +1128,8 @@
                 varianteId: varianteId,
                 nombre: nombre,
                 precio: precio,
+                precioBase: precioBase,
+                tieneOferta: tieneOferta,
                 sku: sku,
                 talla: talla,
                 color: color,
@@ -1094,6 +1159,8 @@
                     varianteId: prod.varianteId,
                     nombre: prod.nombre,
                     precio: prod.precio,
+                    precioBase: prod.precioBase || prod.precio,
+                    tieneOferta: !!prod.tieneOferta,
                     sku: prod.sku,
                     talla: prod.talla,
                     color: prod.color,
@@ -1214,7 +1281,10 @@
                                 <img src="${item.foto || '/images/defaults/product-placeholder.svg'}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null; this.src='/images/defaults/product-placeholder.svg';" />
                             </div>
                             <div class="overflow-hidden">
-                                <div class="fw-bold text-dark text-truncate" style="max-width: 230px; font-size: 14.5px;" title="${item.nombre}">${item.nombre}</div>
+                                <div class="fw-bold text-dark text-truncate d-flex align-items-center gap-1" style="max-width: 230px; font-size: 14.5px;" title="${item.nombre}">
+                                    <span class="text-truncate">${item.nombre}</span>
+                                    ${item.tieneOferta ? '<span class="badge bg-danger text-white" style="font-size: 9.5px; padding: 2px 5px; border-radius: 6px; flex-shrink: 0;">OFERTA</span>' : ''}
+                                </div>
                                 <span class="text-muted fw-semibold" style="font-size: 12.5px;">Talla: ${item.talla} · ${item.color}</span>
                             </div>
                         </div>
@@ -1226,7 +1296,10 @@
                             <button type="button" class="pos-qty-btn" onclick="modificarCantidad('${item.varianteId}', 1)" style="width: 26px; height: 26px; font-size: 13px; font-weight: 800;">+</button>
                         </div>
                     </td>
-                    <td class="text-end fw-bold text-secondary" style="font-size: 14px;">RD$ ${item.precio.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td class="text-end fw-bold ${item.tieneOferta ? 'text-danger' : 'text-secondary'}" style="font-size: 14px; line-height: 1.2;">
+                        ${item.tieneOferta ? `<div style="font-size: 11px; color: #94a3b8; text-decoration: line-through; font-weight: 600;">RD$ ${item.precioBase.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>` : ''}
+                        RD$ ${item.precio.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
                     <td class="text-end fw-bold text-dark" style="font-size: 15px;">RD$ ${subLinea.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td class="text-center">
                         <button type="button" class="pos-btn-del" onclick="removerItemCarrito('${item.varianteId}')" title="Eliminar" style="font-size: 17px;">
@@ -1245,13 +1318,10 @@
             if (elItbisCalc) elItbisCalc.textContent = 'RD$ 0.00';
             document.getElementById('lblTotal').textContent = `RD$ ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-            // Si es efectivo y el monto recibido está vacío o menor al total, rellenar sugerencia
+            // En Efectivo NO autollenar Monto Recibido (el cajero ingresa manualmente el billete recibido);
+            // en Tarjeta, Transferencia y Otro sí se llena automáticamente con el total exacto.
             const txtRecibido = document.getElementById('txtMontoRecibido');
-            if (metodoPagoActual === 1) {
-                if (!txtRecibido.value || parseFloat(txtRecibido.value) < total) {
-                    txtRecibido.value = total.toFixed(2);
-                }
-            } else {
+            if (metodoPagoActual !== 1) {
                 txtRecibido.value = total.toFixed(2);
             }
 
@@ -1278,14 +1348,13 @@
             const total = obtenerTotalNumerico();
 
             if (methodId === 1) {
-                // Efectivo: permitir editar monto recibido
+                // Efectivo: dejar el campo libre y vacío para que el cajero escriba el monto recibido manualmente
                 cashArea.style.opacity = '1';
                 txtRecibido.readOnly = false;
-                if (!txtRecibido.value || parseFloat(txtRecibido.value) < total) {
-                    txtRecibido.value = total > 0 ? total.toFixed(2) : '';
-                }
+                txtRecibido.value = '';
+                if (total > 0) txtRecibido.focus();
             } else {
-                // Tarjeta o Transferencia: monto recibido siempre igual al total
+                // Tarjeta, Transferencia u Otro: monto recibido siempre igual al total
                 txtRecibido.value = total > 0 ? total.toFixed(2) : '';
                 txtRecibido.readOnly = true;
             }
@@ -1301,9 +1370,10 @@
             const txtRecibido = document.getElementById('txtMontoRecibido');
             const lblCambio = document.getElementById('lblCambio');
 
-            const recibido = parseFloat(txtRecibido.value) || 0;
+            const rawVal = (txtRecibido.value || '').trim();
+            const recibido = parseFloat(rawVal) || 0;
 
-            if (total <= 0) {
+            if (total <= 0 || (metodoPagoActual === 1 && rawVal === '')) {
                 lblCambio.textContent = 'RD$ 0.00';
                 lblCambio.classList.remove('insufficient');
                 return;

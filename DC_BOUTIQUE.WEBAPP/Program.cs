@@ -7,6 +7,17 @@ using DC_BOUTIQUE.WEBAPP.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Evitar doble instancia si ya está abierto en modo instalado (abre la ventana existente en vez de fallar el puerto)
+bool isNewInstance = true;
+using var singleInstanceMutex = !builder.Environment.IsDevelopment()
+    ? new Mutex(true, "DC_BOUTIQUE_LOCAL_DESKTOP_INSTANCE", out isNewInstance)
+    : null;
+if (!isNewInstance)
+{
+    ApplicationStartupExtensions.OpenDesktopWindow("http://localhost:5055");
+    return;
+}
+
 // 1. Configuración local y registro de capas (Arquitectura Onion)
 builder.ConfigureLocalDesktopHost(args);
 builder.Services.AddWebAppServices();
