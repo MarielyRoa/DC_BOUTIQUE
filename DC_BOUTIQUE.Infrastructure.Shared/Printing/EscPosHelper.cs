@@ -76,7 +76,7 @@ namespace DC_BOUTIQUE.Infrastructure.Shared.Printing
             WriteBytes(EscAlignRight);
             WriteLine($"SUBTOTAL: {CurrencyHelper.FormatRD(venta.Subtotal)}");
             if (venta.DescuentoTotal > 0) WriteLine($"DESCUENTO: -{CurrencyHelper.FormatRD(venta.DescuentoTotal)}");
-            WriteLine($"ITBIS (18%): {CurrencyHelper.FormatRD(venta.ImpuestoTotal)}");
+            if (venta.ImpuestoTotal > 0) WriteLine($"ITBIS: {CurrencyHelper.FormatRD(venta.ImpuestoTotal)}");
             WriteBytes(EscBoldOn);
             WriteLine($"TOTAL: {CurrencyHelper.FormatRD(venta.TotalNeto)}");
             WriteBytes(EscBoldOff);

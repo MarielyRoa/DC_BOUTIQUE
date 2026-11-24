@@ -204,7 +204,22 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
         [HttpGet]
         public async Task<IActionResult> Ventas(DateTime? fecha)
         {
-            var targetFecha = fecha ?? DateTime.UtcNow.Date;
+            var targetFecha = fecha ?? DC_BOUTIQUE.Core.Application.Helpers.DominicanDateTime.Now.Date;
+
+            // Corregir desfase de ventas generadas anteriormente con hora UTC (+4h)
+            var ventasUtc = _unitOfWork.Ventas.GetAllQuery()
+                .Where(v => v.FechaVenta >= new DateTime(2026, 11, 24, 7, 0, 0) && v.FechaVenta <= new DateTime(2026, 11, 24, 12, 0, 0))
+                .ToList();
+            if (ventasUtc.Any())
+            {
+                foreach (var v in ventasUtc)
+                {
+                    v.FechaVenta = v.FechaVenta.AddHours(-4);
+                    await _unitOfWork.Ventas.UpdateAsync(v);
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
+
             var ventas = await _ventaService.GetVentasDelDiaAsync(targetFecha);
             var model = ventas.Select(v => v.ToViewModel()).ToList();
 

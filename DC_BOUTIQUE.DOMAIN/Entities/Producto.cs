@@ -17,8 +17,8 @@ namespace DC_BOUTIQUE.Core.Domain.Entities
         public decimal CostoBaseReferencia { get; set; }
         public decimal PrecioVentaBase { get; set; }
         public decimal? PrecioOferta { get; set; }
-        public decimal PorcentajeImpuesto { get; set; } = 18m; // ITBIS
-        public bool AplicaImpuesto { get; set; } = true;
+        public decimal PorcentajeImpuesto { get; set; } = 0m;
+        public bool AplicaImpuesto { get; set; } = false;
 
         // Propiedades de navegación
         public Categoria? Categoria { get; set; }

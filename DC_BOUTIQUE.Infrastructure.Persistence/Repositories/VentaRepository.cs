@@ -23,6 +23,7 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence.Repositories
         {
             return await _dbSet
                 .Include(v => v.Cliente)
+                .Include(v => v.Usuario)
                 .Include(v => v.Detalles)
                 .Include(v => v.Pagos)
                 .FirstOrDefaultAsync(v => v.NumeroFactura == numeroFactura.Trim(), cancellationToken);
@@ -32,6 +33,8 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence.Repositories
         {
             return await _dbSet
                 .Where(v => v.TurnoCajaId == turnoCajaId && v.Activo)
+                .Include(v => v.Cliente)
+                .Include(v => v.Usuario)
                 .Include(v => v.Pagos)
                 .OrderByDescending(v => v.FechaVenta)
                 .ToListAsync(cancellationToken);
@@ -43,6 +46,8 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence.Repositories
             var fin = inicio.AddDays(1);
             return await _dbSet
                 .Where(v => v.FechaVenta >= inicio && v.FechaVenta < fin && v.Activo)
+                .Include(v => v.Cliente)
+                .Include(v => v.Usuario)
                 .Include(v => v.Pagos)
                 .OrderByDescending(v => v.FechaVenta)
                 .ToListAsync(cancellationToken);

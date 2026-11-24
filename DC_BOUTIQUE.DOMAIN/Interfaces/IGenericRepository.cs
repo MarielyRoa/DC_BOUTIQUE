@@ -11,6 +11,7 @@ namespace DC_BOUTIQUE.Core.Domain.Interfaces
         Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
         Task<TEntity?> UpdateAsync(Guid id, TEntity entity, CancellationToken cancellationToken = default);
         Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task HardDeleteAsync(Guid id, CancellationToken cancellationToken = default);
         IQueryable<TEntity> GetAllQuery();
         IQueryable<TEntity> GetAllQueryWithInclude(List<string> properties);
         Task<List<TEntity>> GetAllListWithInclude(List<string> properties, CancellationToken cancellationToken = default);

@@ -109,12 +109,12 @@
                 const form = this.closest('form');
                 Swal.fire({
                     title: '¿Eliminar clienta?',
-                    text: `Se retirará a "${name}" del directorio.`,
+                    text: `Esta acción eliminará permanentemente a "${name}" de la base de datos.`,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#1A1816',
-                    cancelButtonColor: '#716C66',
-                    confirmButtonText: 'Sí, eliminar',
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Sí, eliminar de la BD',
                     cancelButtonText: 'Cancelar'
                 }).then((r) => {
                     if (r.isConfirmed) form.submit();

@@ -72,10 +72,29 @@
                                 </a>
                                 @if (u.NombreUsuario != "admin")
                                 {
-                                    <form asp-action="Delete" asp-route-id="@u.Id" method="post" class="d-inline">
+                                    @if (u.Activo)
+                                    {
+                                        <form asp-action="Delete" asp-route-id="@u.Id" method="post" class="d-inline me-1">
+                                            @Html.AntiForgeryToken()
+                                            <button type="button" class="btn btn-sm btn-outline-warning btn-confirm-delete" data-name="@u.NombreCompleto" title="Desactivar cajero/usuario">
+                                                <i class="bi bi-person-x"></i> Desactivar
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="Activar" asp-route-id="@u.Id" method="post" class="d-inline me-1">
+                                            @Html.AntiForgeryToken()
+                                            <button type="button" class="btn btn-sm btn-success text-white btn-confirm-activate shadow-sm" data-name="@u.NombreCompleto" title="Activar cajero/usuario">
+                                                <i class="bi bi-person-check-fill me-1"></i> Activar
+                                            </button>
+                                        </form>
+                                    }
+
+                                    <form asp-action="HardDelete" asp-route-id="@u.Id" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-confirm-delete" data-name="@u.NombreCompleto" title="Deshabilitar">
-                                            <i class="bi bi-trash"></i>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-confirm-hard-delete shadow-sm" data-name="@u.NombreCompleto" title="Eliminar definitivamente de la base de datos">
+                                            <i class="bi bi-trash3-fill"></i> Eliminar
                                         </button>
                                     </form>
                                 }
@@ -102,18 +121,74 @@
             btn.addEventListener('click', function() {
                 const name = this.getAttribute('data-name');
                 const form = this.closest('form');
-                Swal.fire({
-                    title: '¿Deshabilitar usuario?',
-                    text: `Se retirará el acceso a "${name}".`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#1A1816',
-                    cancelButtonColor: '#716C66',
-                    confirmButtonText: 'Sí, deshabilitar',
-                    cancelButtonText: 'Cancelar'
-                }).then((r) => {
-                    if (r.isConfirmed) form.submit();
-                });
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '¿Desactivar usuario / cajero?',
+                        text: `Se retirará el acceso al sistema para "${name}".`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#716C66',
+                        confirmButtonText: 'Sí, desactivar',
+                        cancelButtonText: 'Cancelar'
+                    }).then((r) => {
+                        if (r.isConfirmed) form.submit();
+                    });
+                } else {
+                    if (confirm(`¿Desactivar acceso al sistema para "${name}"?`)) {
+                        form.submit();
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.btn-confirm-activate').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const name = this.getAttribute('data-name');
+                const form = this.closest('form');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '¿Activar usuario / cajero?',
+                        text: `Se habilitará el acceso al sistema y al POS para "${name}".`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#10b981',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Sí, activar',
+                        cancelButtonText: 'Cancelar'
+                    }).then((r) => {
+                        if (r.isConfirmed) form.submit();
+                    });
+                } else {
+                    if (confirm(`¿Habilitar acceso al sistema para "${name}"?`)) {
+                        form.submit();
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.btn-confirm-hard-delete').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const name = this.getAttribute('data-name');
+                const form = this.closest('form');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '¿Eliminar usuario de la base de datos?',
+                        text: `Se eliminará permanentemente a "${name}". Esta acción no se puede deshacer.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc2626',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Sí, eliminar definitivamente',
+                        cancelButtonText: 'Cancelar'
+                    }).then((r) => {
+                        if (r.isConfirmed) form.submit();
+                    });
+                } else {
+                    if (confirm(`¿Eliminar definitivamente a "${name}" de la base de datos?`)) {
+                        form.submit();
+                    }
+                }
             });
         });
     </script>

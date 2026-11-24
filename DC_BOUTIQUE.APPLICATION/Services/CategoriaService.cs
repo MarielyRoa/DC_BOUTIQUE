@@ -116,15 +116,18 @@ namespace DC_BOUTIQUE.Core.Application.Services
                 return Result.Failure("La categoría no existe o ya fue eliminada.");
             }
 
-            if (categoria.Productos != null && categoria.Productos.Any())
+            var tieneProductos = _unitOfWork.Productos.GetAllQuery()
+                .Any(p => p.CategoriaId == id);
+
+            if (tieneProductos)
             {
-                return Result.Failure($"No se puede eliminar la categoría '{categoria.Nombre}' porque contiene {categoria.Productos.Count} prenda(s) asociada(s).");
+                return Result.Failure($"No se puede eliminar la categoría '{categoria.Nombre}' porque contiene prendas asociadas en el catálogo. Reasigne o elimine las prendas primero.");
             }
 
-            await _unitOfWork.Categorias.DeleteAsync(id, cancellationToken);
+            await _unitOfWork.Categorias.HardDeleteAsync(id, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result.Success("Categoría eliminada exitosamente.");
+            return Result.Success($"Categoría '{categoria.Nombre}' eliminada permanentemente de la base de datos.");
         }
     }
 }

@@ -194,7 +194,10 @@ namespace DC_BOUTIQUE.Infrastructure.Shared.Printing
             {
                 sb.Append($"<tr><td>DESCUENTO:</td><td class=\"text-right\">-{CurrencyHelper.FormatRD(venta.DescuentoTotal)}</td></tr>");
             }
-            sb.Append($"<tr><td>ITBIS (18%):</td><td class=\"text-right\">{CurrencyHelper.FormatRD(venta.ImpuestoTotal)}</td></tr>");
+            if (venta.ImpuestoTotal > 0)
+            {
+                sb.Append($"<tr><td>ITBIS:</td><td class=\"text-right\">{CurrencyHelper.FormatRD(venta.ImpuestoTotal)}</td></tr>");
+            }
             sb.Append($"<tr class=\"grand-total\"><td class=\"bold\">TOTAL:</td><td class=\"text-right bold\">{CurrencyHelper.FormatRD(venta.TotalNeto)}</td></tr>");
             sb.Append("</table>");
 

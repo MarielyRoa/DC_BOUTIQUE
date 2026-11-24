@@ -42,25 +42,16 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
             return View(viewModels);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> CargarDemo([FromServices] DC_BOUTIQUE.Infrastructure.Persistence.Contexts.DCBoutiqueContext context)
-        {
-            try
-            {
-                await DC_BOUTIQUE.Infrastructure.Persistence.DbInitializer.SeedProductosDemoAsync(context);
-                TempData["SuccessMessage"] = "¡Catálogo de demostración cargado exitosamente con prendas, fotos y stock en todas las categorías!";
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "Ocurrió un error al cargar las prendas demo: " + ex.Message;
-            }
-            return RedirectToAction(nameof(Index));
-        }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> VaciarCatalogo([FromServices] DC_BOUTIQUE.Infrastructure.Persistence.Contexts.DCBoutiqueContext context)
+        public async Task<IActionResult> VaciarCatalogo([FromServices] DC_BOUTIQUE.Infrastructure.Persistence.Contexts.DCBoutiqueContext context, [FromForm] string claveConfirmacion)
         {
+            if (string.IsNullOrWhiteSpace(claveConfirmacion) || claveConfirmacion.Trim() != "1234")
+            {
+                TempData["ErrorMessage"] = "Clave de seguridad incorrecta. No se realizaron cambios en la base de datos.";
+                return RedirectToAction(nameof(Index));
+            }
+
             try
             {
                 var detalles = await context.DetallesVenta.ToListAsync();
@@ -75,6 +66,9 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
                 var productos = await context.Productos.ToListAsync();
                 if (productos.Any()) context.Productos.RemoveRange(productos);
 
+                var categorias = await context.Categorias.ToListAsync();
+                if (categorias.Any()) context.Categorias.RemoveRange(categorias);
+
                 await context.SaveChangesAsync();
 
                 var productosPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "productos");
@@ -86,11 +80,11 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
                     }
                 }
 
-                TempData["SuccessMessage"] = "Catálogo vaciado completamente. Se han retirado todos los productos de la base de datos.";
+                TempData["SuccessMessage"] = "Catálogo y categorías vaciados completamente. La base de datos está limpia.";
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Error al vaciar catálogo: " + ex.Message;
+                TempData["ErrorMessage"] = "Ocurrió un error al vaciar el catálogo: " + ex.Message;
             }
             return RedirectToAction(nameof(Index));
         }
@@ -104,8 +98,8 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
                 CodigoModelo = $"DC-{DateTime.Now:yyyyMM}-{new Random().Next(100, 999)}",
                 PrecioVentaBase = 0m,
                 CostoBaseReferencia = 0m,
-                PorcentajeImpuesto = 18m,
-                AplicaImpuesto = true
+                PorcentajeImpuesto = 0m,
+                AplicaImpuesto = false
             };
 
             model.Variantes.Add(new SaveProductoVarianteViewModel

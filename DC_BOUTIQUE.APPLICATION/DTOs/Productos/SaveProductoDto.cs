@@ -39,8 +39,8 @@ namespace DC_BOUTIQUE.Core.Application.DTOs.Productos
         [Range(0.01, 9999999, ErrorMessage = "El precio de oferta debe ser mayor a 0.")]
         public decimal? PrecioOferta { get; set; }
 
-        public decimal PorcentajeImpuesto { get; set; } = 18m;
-        public bool AplicaImpuesto { get; set; } = true;
+        public decimal PorcentajeImpuesto { get; set; } = 0m;
+        public bool AplicaImpuesto { get; set; } = false;
 
         public List<SaveProductoVarianteDto> Variantes { get; set; } = new();
     }

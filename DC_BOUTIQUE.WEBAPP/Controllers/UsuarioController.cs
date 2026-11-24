@@ -113,5 +113,39 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> HardDelete(Guid id)
+        {
+            var result = await _usuarioService.HardDeleteAsync(id);
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = result.Message;
+            }
+            else
+            {
+                TempData["SuccessMessage"] = result.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Activar(Guid id)
+        {
+            var result = await _usuarioService.ActivarAsync(id);
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = result.Message;
+            }
+            else
+            {
+                TempData["SuccessMessage"] = result.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

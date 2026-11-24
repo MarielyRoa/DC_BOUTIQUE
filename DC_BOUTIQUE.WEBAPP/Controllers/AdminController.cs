@@ -18,8 +18,8 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var hoy = DateTime.UtcNow.Date;
-            var primerDiaMes = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+            var hoy = DC_BOUTIQUE.Core.Application.Helpers.DominicanDateTime.Now.Date;
+            var primerDiaMes = new DateTime(hoy.Year, hoy.Month, 1);
 
             // Ventas de hoy y del mes
             var ventasHoy = await _unitOfWork.Ventas.GetAllQuery()

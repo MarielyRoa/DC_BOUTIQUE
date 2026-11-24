@@ -17,7 +17,35 @@ namespace DC_BOUTIQUE.Core.Application.Services
 
         public async Task<List<ClienteDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var clientes = await _unitOfWork.Clientes.GetAllListAsync(cancellationToken);
+            // Limpieza y purga automática de clientes inactivos residuales para asegurar borrado real en base de datos
+            var inactivos = _unitOfWork.Clientes.GetAllQuery()
+                .Where(c => !c.Activo)
+                .ToList();
+
+            if (inactivos.Any())
+            {
+                foreach (var inactivo in inactivos)
+                {
+                    var ventas = _unitOfWork.Ventas.GetAllQuery()
+                        .Where(v => v.ClienteId == inactivo.Id)
+                        .ToList();
+
+                    foreach (var v in ventas)
+                    {
+                        v.ClienteId = null;
+                        await _unitOfWork.Ventas.UpdateAsync(v, cancellationToken);
+                    }
+
+                    await _unitOfWork.Clientes.HardDeleteAsync(inactivo.Id, cancellationToken);
+                }
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
+            var clientes = _unitOfWork.Clientes.GetAllQuery()
+                .Where(c => c.Activo)
+                .OrderByDescending(c => c.FechaCreacion)
+                .ToList();
+
             return clientes.Select(MapToDto).ToList();
         }
 
@@ -98,12 +126,24 @@ namespace DC_BOUTIQUE.Core.Application.Services
                 return Result.Failure("El cliente no existe o ya fue eliminado.");
             }
 
-            // Desactivar en lugar de borrado físico destructivo si tiene ventas
-            c.Activo = false;
-            await _unitOfWork.Clientes.UpdateAsync(c, cancellationToken);
+            var nombreCompleto = $"{c.Nombres} {c.Apellidos}".Trim();
+
+            // Desvincular ventas asociadas para preservar la integridad de comprobantes históricos
+            var ventas = _unitOfWork.Ventas.GetAllQuery()
+                .Where(v => v.ClienteId == id)
+                .ToList();
+
+            foreach (var v in ventas)
+            {
+                v.ClienteId = null;
+                await _unitOfWork.Ventas.UpdateAsync(v, cancellationToken);
+            }
+
+            // Eliminación física directa y definitiva de la base de datos
+            await _unitOfWork.Clientes.HardDeleteAsync(id, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result.Success("Cliente desactivado correctamente.");
+            return Result.Success($"Cliente '{nombreCompleto}' eliminado permanentemente de la base de datos.");
         }
 
         private static ClienteDto MapToDto(Cliente c)

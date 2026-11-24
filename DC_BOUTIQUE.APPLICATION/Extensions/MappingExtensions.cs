@@ -47,7 +47,8 @@ namespace DC_BOUTIQUE.Core.Application.Extensions
                 Cedula = vm.Cedula,
                 Telefono = vm.Telefono,
                 Rol = vm.Rol,
-                PorcentajeComision = vm.PorcentajeComision
+                PorcentajeComision = vm.PorcentajeComision,
+                Activo = vm.Activo
             };
         }
 
@@ -61,7 +62,8 @@ namespace DC_BOUTIQUE.Core.Application.Extensions
                 Cedula = dto.Cedula,
                 Telefono = dto.Telefono,
                 Rol = dto.Rol,
-                PorcentajeComision = dto.PorcentajeComision
+                PorcentajeComision = dto.PorcentajeComision,
+                Activo = dto.Activo
             };
         }
         #endregion

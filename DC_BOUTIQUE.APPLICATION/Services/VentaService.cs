@@ -67,7 +67,8 @@ namespace DC_BOUTIQUE.Core.Application.Services
             await _unitOfWork.BeginTransactionAsync(cancellationToken);
             try
             {
-                var numeroFactura = $"VENTA-{DateTime.UtcNow:yyyyMMdd}-{DateTime.UtcNow:HHmmss}";
+                var localNow = Helpers.DominicanDateTime.Now;
+                var numeroFactura = $"VENTA-{localNow:yyyyMMdd}-{localNow:HHmmss}";
                 var venta = new Venta
                 {
                     NumeroFactura = numeroFactura,
@@ -75,14 +76,13 @@ namespace DC_BOUTIQUE.Core.Application.Services
                     ClienteId = dto.ClienteId,
                     UsuarioId = usuarioId,
                     TurnoCajaId = dto.TurnoCajaId,
-                    FechaVenta = DateTime.UtcNow,
+                    FechaVenta = localNow,
                     Estado = EstadoVenta.Completada,
                     Observaciones = dto.Observaciones?.Trim()
                 };
 
                 decimal subtotalAcumulado = 0m;
                 decimal descuentoAcumulado = 0m;
-                decimal impuestoAcumulado = 0m;
 
                 // 3. Procesar cada prenda del carrito
                 foreach (var item in dto.Items)
@@ -110,13 +110,8 @@ namespace DC_BOUTIQUE.Core.Application.Services
                     var montoDescuento = baseLinea * (item.PorcentajeDescuento / 100m);
                     var netoLinea = baseLinea - montoDescuento;
 
-                    var montoImpuesto = producto.AplicaImpuesto
-                        ? netoLinea * (producto.PorcentajeImpuesto / 100m)
-                        : 0m;
-
                     subtotalAcumulado += baseLinea;
                     descuentoAcumulado += montoDescuento;
-                    impuestoAcumulado += montoImpuesto;
 
                     var detalle = new DetalleVenta
                     {
@@ -131,8 +126,8 @@ namespace DC_BOUTIQUE.Core.Application.Services
                         PrecioUnitario = precioUnitario,
                         PorcentajeDescuento = item.PorcentajeDescuento,
                         MontoDescuento = montoDescuento,
-                        MontoImpuesto = montoImpuesto,
-                        SubtotalLinea = netoLinea + montoImpuesto
+                        MontoImpuesto = 0m,
+                        SubtotalLinea = netoLinea
                     };
                     venta.Detalles.Add(detalle);
 
@@ -159,8 +154,8 @@ namespace DC_BOUTIQUE.Core.Application.Services
 
                 venta.Subtotal = subtotalAcumulado;
                 venta.DescuentoTotal = descuentoAcumulado;
-                venta.ImpuestoTotal = impuestoAcumulado;
-                venta.TotalNeto = (subtotalAcumulado - descuentoAcumulado) + impuestoAcumulado;
+                venta.ImpuestoTotal = 0m;
+                venta.TotalNeto = subtotalAcumulado - descuentoAcumulado;
 
                 // 6. Validar pagos
                 var totalPagado = dto.Pagos.Sum(p => p.Monto);
@@ -184,7 +179,8 @@ namespace DC_BOUTIQUE.Core.Application.Services
                 await _unitOfWork.Ventas.AddAsync(venta, cancellationToken);
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
-                return Result<VentaDto>.Success(MapToDto(venta), $"Venta #{venta.NumeroFactura} procesada exitosamente.");
+                var ventaCompleta = await _unitOfWork.Ventas.GetDetalleCompletoAsync(venta.Id, cancellationToken);
+                return Result<VentaDto>.Success(MapToDto(ventaCompleta ?? venta), $"Venta #{venta.NumeroFactura} procesada exitosamente.");
             }
             catch (Exception ex)
             {

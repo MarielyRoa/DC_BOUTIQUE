@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#e0f2fe" />
+    </linearGradient>
+  </defs>
+  <rect width="300" height="300" rx="16" fill="url(#bgGrad)" />
+  <circle cx="150" cy="130" r="64" fill="#ffffff" fill-opacity="0.8" stroke="#bae6fd" stroke-width="2" />
+  
+  <!-- Hanger and dress icon -->
+  <g transform="translate(100, 85)" fill="none" stroke="#0284c7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Hook -->
+    <path d="M50,15 C45,0 58,-8 50,-12 C44,-15 36,-6 40,0 C42,4 49,9 50,15 Z" fill="none" />
+    <!-- Hanger triangle -->
+    <path d="M50,15 L12,42 C10,43.5 12,46 15,46 L85,46 C88,46 90,43.5 88,42 Z" fill="#e0f2fe" fill-opacity="0.5" />
+    <!-- Dress silhouette -->
+    <path d="M35,46 L25,75 C24,78 28,82 32,82 L42,82 L38,105 L62,105 L58,82 L68,82 C72,82 76,78 75,75 L65,46" fill="#38bdf8" fill-opacity="0.25" stroke="#0284c7" stroke-width="3.5" />
+  </g>
+  
+  <text x="150" y="235" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" fill="#64748b" text-anchor="middle" letter-spacing="0.5">PRENDA DE BOUTIQUE</text>
+</svg>

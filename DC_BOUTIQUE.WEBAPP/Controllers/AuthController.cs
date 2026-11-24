@@ -53,7 +53,25 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
                     var domainUser = await _usuarioService.AutenticarAsync(model.Username.Trim(), model.Password);
                     if (domainUser == null)
                     {
-                        ModelState.AddModelError("", authResponse.Error ?? "Usuario o contraseña/PIN incorrecto.");
+                        var userExists = await _usuarioService.GetByNombreUsuarioAsync(model.Username.Trim());
+                        if (userExists == null)
+                        {
+                            ModelState.AddModelError("", "Usuario no identificado o no registrado en el sistema.");
+                        }
+                        else if (!userExists.Activo)
+                        {
+                            ModelState.AddModelError("", "Este usuario se encuentra inactivo. Contacte al administrador.");
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("", "Contraseña o PIN incorrecto.");
+                        }
+                        return View(model);
+                    }
+
+                    if (!domainUser.Activo)
+                    {
+                        ModelState.AddModelError("", "Este usuario se encuentra inactivo. Contacte al administrador.");
                         return View(model);
                     }
 

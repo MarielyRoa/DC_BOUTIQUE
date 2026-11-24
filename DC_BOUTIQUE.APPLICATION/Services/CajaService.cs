@@ -76,12 +76,13 @@ namespace DC_BOUTIQUE.Core.Application.Services
                 return Result<TurnoCajaDto>.Failure("El fondo inicial en efectivo no puede ser negativo.");
             }
 
-            var codigo = $"TURNO-{DateTime.UtcNow:yyyyMMdd}-{DateTime.UtcNow:HHmmss}";
+            var localNow = Helpers.DominicanDateTime.Now;
+            var codigo = $"TURNO-{localNow:yyyyMMdd}-{localNow:HHmmss}";
             var turno = new TurnoCaja
             {
                 CodigoTurno = codigo,
                 UsuarioId = usuarioId,
-                FechaApertura = DateTime.UtcNow,
+                FechaApertura = localNow,
                 FondoInicialEfectivo = dto.FondoInicialEfectivo,
                 Estado = EstadoCaja.Abierta,
                 Observaciones = dto.Observaciones?.Trim()
@@ -105,7 +106,7 @@ namespace DC_BOUTIQUE.Core.Application.Services
             var totales = await CalcularTotalesTurnoAsync(turno, cancellationToken);
             var diferencia = dto.EfectivoContadoAlCierre - totales.EfectivoEsperadoEnCaja;
 
-            turno.FechaCierre = DateTime.UtcNow;
+            turno.FechaCierre = Helpers.DominicanDateTime.Now;
             turno.EfectivoContadoAlCierre = dto.EfectivoContadoAlCierre;
             turno.DiferenciaArqueo = diferencia;
             turno.Estado = Math.Abs(diferencia) < 0.01m ? EstadoCaja.CerradaCuadrada : EstadoCaja.CerradaConDiferencia;
@@ -242,6 +243,49 @@ namespace DC_BOUTIQUE.Core.Application.Services
                 Estado = turno.Estado,
                 Observaciones = turno.Observaciones
             };
+        }
+
+        public async Task LimpiarTurnosCerradosAntiguosAsync(CancellationToken cancellationToken = default)
+        {
+            var demoCutoff = new DateTime(2026, 11, 24, 7, 0, 0, DateTimeKind.Utc);
+            var turnosAntiguos = _unitOfWork.TurnosCaja.GetAllQuery()
+                .Where(t => t.Estado != EstadoCaja.Abierta && t.FechaApertura < demoCutoff)
+                .ToList();
+
+            if (!turnosAntiguos.Any()) return;
+
+            var turnosIds = turnosAntiguos.Select(t => t.Id).ToList();
+
+            var ventasAntiguas = _unitOfWork.Ventas.GetAllQuery()
+                .Where(v => turnosIds.Contains(v.TurnoCajaId))
+                .ToList();
+
+            if (ventasAntiguas.Any())
+            {
+                foreach (var v in ventasAntiguas)
+                {
+                    await _unitOfWork.Ventas.HardDeleteAsync(v.Id, cancellationToken);
+                }
+            }
+
+            var gastosAntiguos = _unitOfWork.GastosCaja.GetAllQuery()
+                .Where(g => g.TurnoCajaId.HasValue && turnosIds.Contains(g.TurnoCajaId.Value))
+                .ToList();
+
+            if (gastosAntiguos.Any())
+            {
+                foreach (var g in gastosAntiguos)
+                {
+                    await _unitOfWork.GastosCaja.HardDeleteAsync(g.Id, cancellationToken);
+                }
+            }
+
+            foreach (var t in turnosAntiguos)
+            {
+                await _unitOfWork.TurnosCaja.HardDeleteAsync(t.Id, cancellationToken);
+            }
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 }

@@ -192,6 +192,7 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
         [HttpGet]
         public async Task<IActionResult> Historial(DateTime? fechaDesde, DateTime? fechaHasta)
         {
+            await _cajaService.LimpiarTurnosCerradosAntiguosAsync();
             var turnosDto = await _cajaService.GetHistorialTurnosAsync(fechaDesde, fechaHasta);
             var model = turnosDto.Select(t => t.ToViewModel()).ToList();
 
@@ -199,6 +200,15 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
             ViewBag.FechaHasta = fechaHasta?.ToString("yyyy-MM-dd");
 
             return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LimpiarHistorialAntiguo()
+        {
+            await _cajaService.LimpiarTurnosCerradosAntiguosAsync();
+            TempData["SuccessMessage"] = "Historial de cajas depurado correctamente. Solo permanece la caja en curso.";
+            return RedirectToAction(nameof(Historial));
         }
 
         [HttpGet]

@@ -104,6 +104,7 @@ namespace DC_BOUTIQUE.Core.Application.Services
             u.Telefono = dto.Telefono?.Trim();
             u.Rol = dto.Rol;
             u.PorcentajeComision = dto.PorcentajeComision;
+            u.Activo = dto.Activo;
 
             if (!string.IsNullOrWhiteSpace(dto.Password))
             {
@@ -150,6 +151,61 @@ namespace DC_BOUTIQUE.Core.Application.Services
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success("Usuario desactivado exitosamente.");
+        }
+
+        public async Task<Result> ActivarAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var u = await _unitOfWork.Usuarios.GetByIdAsync(id, cancellationToken);
+            if (u == null)
+            {
+                return Result.Failure("El usuario no existe o ya fue eliminado.");
+            }
+
+            u.Activo = true;
+            await _unitOfWork.Usuarios.UpdateAsync(u, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return Result.Success($"Usuario '{u.NombreCompleto}' activado exitosamente.");
+        }
+
+        public async Task<Result> HardDeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var u = await _unitOfWork.Usuarios.GetByIdAsync(id, cancellationToken);
+            if (u == null)
+            {
+                return Result.Failure("El usuario no existe o ya fue eliminado.");
+            }
+
+            if (u.NombreUsuario.Equals("admin", StringComparison.OrdinalIgnoreCase))
+            {
+                return Result.Failure("No es posible eliminar el usuario administrador principal del sistema.");
+            }
+
+            // Validar si tiene ventas asociadas
+            var tieneVentas = _unitOfWork.Ventas.GetAllQuery().Any(v => v.UsuarioId == id);
+            if (tieneVentas)
+            {
+                return Result.Failure($"No se puede eliminar a '{u.NombreCompleto}' porque tiene ventas o facturas registradas en el historial. Puedes desactivarlo para bloquear su acceso.");
+            }
+
+            // Validar si tiene turnos de caja asociados
+            var tieneTurnos = _unitOfWork.TurnosCaja.GetAllQuery().Any(t => t.UsuarioId == id);
+            if (tieneTurnos)
+            {
+                return Result.Failure($"No se puede eliminar a '{u.NombreCompleto}' porque tiene turnos de caja registrados. Puedes desactivarlo para bloquear su acceso.");
+            }
+
+            // Validar si tiene movimientos de inventario asociados
+            var tieneMovimientos = _unitOfWork.MovimientosInventario.GetAllQuery().Any(m => m.UsuarioId == id);
+            if (tieneMovimientos)
+            {
+                return Result.Failure($"No se puede eliminar a '{u.NombreCompleto}' porque tiene registros en el Kardex / movimientos de inventario.");
+            }
+
+            await _unitOfWork.Usuarios.HardDeleteAsync(id, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return Result.Success($"Usuario '{u.NombreCompleto}' eliminado definitivamente de la base de datos.");
         }
 
         private static string HashPassword(string password)

@@ -27,5 +27,7 @@ namespace DC_BOUTIQUE.Core.Application.ViewModels.Usuarios
 
         [Range(0, 100, ErrorMessage = "El porcentaje debe estar entre 0 y 100.")]
         public decimal PorcentajeComision { get; set; } = 0m;
+
+        public bool Activo { get; set; } = true;
     }
 }

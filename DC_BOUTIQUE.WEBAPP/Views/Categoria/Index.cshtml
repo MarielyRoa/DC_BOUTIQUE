@@ -81,12 +81,12 @@
                 const form = this.closest('form');
                 Swal.fire({
                     title: '¿Eliminar categoría?',
-                    text: `Se deshabilitará la categoría "${name}".`,
+                    text: `Se eliminará permanentemente "${name}" de la base de datos.`,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#1A1816',
-                    cancelButtonColor: '#716C66',
-                    confirmButtonText: 'Sí, eliminar',
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Sí, eliminar de la BD',
                     cancelButtonText: 'Cancelar'
                 }).then((result) => {
                     if (result.isConfirmed) {

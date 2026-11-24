@@ -162,7 +162,7 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
                 var query = _unitOfWork.ProductoVariantes.GetAllQuery()
                     .Include(v => v.Producto)
                     .ThenInclude(p => p!.Categoria)
-                    .Where(v => v.Activo && v.Producto != null && v.Producto.Activo && !v.Producto.Nombre.ToLower().Contains("vestido satin"));
+                    .Where(v => v.Activo && v.Producto != null && v.Producto.Activo);
 
                 if (categoriaId.HasValue && categoriaId.Value != Guid.Empty)
                 {

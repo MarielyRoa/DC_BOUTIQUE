@@ -13,5 +13,6 @@ namespace DC_BOUTIQUE.Core.Application.Interfaces
         Task<Result<TurnoCajaDto>> CerrarTurnoAsync(Guid usuarioId, CerrarTurnoDto dto, CancellationToken cancellationToken = default);
         Task<Result<GastoCajaDto>> RegistrarGastoAsync(Guid usuarioId, SaveGastoCajaDto dto, CancellationToken cancellationToken = default);
         Task<List<GastoCajaDto>> GetGastosPorTurnoAsync(Guid turnoId, CancellationToken cancellationToken = default);
+        Task LimpiarTurnosCerradosAntiguosAsync(CancellationToken cancellationToken = default);
     }
 }

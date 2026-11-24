@@ -67,6 +67,16 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence.Repositories
             }
         }
 
+        public virtual async Task HardDeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var entity = await GetByIdAsync(id, cancellationToken);
+            if (entity != null)
+            {
+                _dbSet.Remove(entity);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
+
         public virtual IQueryable<TEntity> GetAllQuery()
         {
             return _dbSet.AsQueryable();
