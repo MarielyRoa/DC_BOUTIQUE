@@ -1,3 +1,4 @@
+using DC_BOUTIQUE.Core.Domain.Helpers;
 using DC_BOUTIQUE.Core.Domain.Interfaces;
 using DC_BOUTIQUE.Infrastructure.Persistence.Contexts;
 using DC_BOUTIQUE.Infrastructure.Persistence.Repositories;
@@ -12,13 +13,13 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence
     {
         public static IServiceCollection AddPersistenceInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            // Leer el proveedor deseado: "SqlServer" o "Sqlite" (por defecto SqlServer)
-            var provider = configuration["DatabaseProvider"] ?? "SqlServer";
+            // Proveedor por defecto: "Sqlite" para distribución cliente autónoma sin servidores
+            var provider = configuration["DatabaseProvider"] ?? "Sqlite";
 
             if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
             {
-                var sqliteConn = configuration.GetConnectionString("SqliteConnection") 
-                    ?? "Data Source=DC_BOUTIQUE_LOCAL.db;Cache=Shared";
+                // Resuelve dinámicamente C:\ProgramData\DC_BOUTIQUE\Data\DC_BOUTIQUE.db mediante Environment.SpecialFolder
+                var sqliteConn = DatabasePathHelper.GetSqliteConnectionString();
 
                 services.AddDbContext<DCBoutiqueContext>(options =>
                 {

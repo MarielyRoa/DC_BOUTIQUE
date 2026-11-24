@@ -505,6 +505,10 @@
                     <i class="bi bi-hdd-network"></i>
                     <span>Base de Datos / Backup</span>
                 </a>
+                <a asp-controller="Manual" asp-action="Index" class="dc-nav-item">
+                    <i class="bi bi-book-half"></i>
+                    <span>Manual / Guía de Uso</span>
+                </a>
             }
             else
             {
@@ -525,6 +529,11 @@
                 <a asp-controller="Caja" asp-action="Cerrar" class="dc-nav-item text-danger">
                     <i class="bi bi-lock-fill text-danger"></i>
                     <span>Cuadre / Cerrar Turno</span>
+                </a>
+                <div class="dc-nav-section-title">Ayuda</div>
+                <a asp-controller="Manual" asp-action="Index" class="dc-nav-item">
+                    <i class="bi bi-book-half"></i>
+                    <span>Manual / Guía de Uso</span>
                 </a>
             }
         </div>

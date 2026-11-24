@@ -4,6 +4,8 @@ using DC_BOUTIQUE.Core.Domain.Common.Enums;
 using DC_BOUTIQUE.Core.Domain.Entities;
 using DC_BOUTIQUE.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DC_BOUTIQUE.Infrastructure.Persistence
 {
@@ -13,7 +15,19 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence
         {
             if (context.Database.IsSqlite())
             {
-                await context.Database.EnsureCreatedAsync();
+                var creator = context.Database.GetService<IRelationalDatabaseCreator>();
+                if (!await creator.ExistsAsync())
+                {
+                    await creator.CreateAsync();
+                }
+                try
+                {
+                    await creator.CreateTablesAsync();
+                }
+                catch
+                {
+                    // Las tablas de negocio ya existen; se preservan todos sus datos intactos
+                }
             }
             else
             {
@@ -79,49 +93,6 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence
             if (categoriasInactivas.Any())
             {
                 context.Categorias.RemoveRange(categoriasInactivas);
-            }
-
-            // 4. Limpiar turnos de caja antiguos cerrados (solo conservar el turno abierto en curso)
-            var demoCutoff = new DateTime(2026, 11, 24, 7, 0, 0, DateTimeKind.Utc);
-            var turnosCerradosAntiguos = await context.TurnosCaja
-                .Where(t => t.Estado != EstadoCaja.Abierta && t.FechaApertura < demoCutoff)
-                .ToListAsync();
-
-            if (turnosCerradosAntiguos.Any())
-            {
-                var turnosIds = turnosCerradosAntiguos.Select(t => t.Id).ToList();
-
-                var ventasAntiguas = await context.Ventas
-                    .Where(v => turnosIds.Contains(v.TurnoCajaId))
-                    .ToListAsync();
-
-                if (ventasAntiguas.Any())
-                {
-                    context.Ventas.RemoveRange(ventasAntiguas);
-                }
-
-                var gastosAntiguos = await context.GastosCaja
-                    .Where(g => g.TurnoCajaId.HasValue && turnosIds.Contains(g.TurnoCajaId.Value))
-                    .ToListAsync();
-
-                if (gastosAntiguos.Any())
-                {
-                    context.GastosCaja.RemoveRange(gastosAntiguos);
-                }
-
-                context.TurnosCaja.RemoveRange(turnosCerradosAntiguos);
-            }
-
-            // 5. Ajustar ventas registradas con hora UTC (+4h) a hora local dominicana
-            var ventasUtc = await context.Ventas
-                .Where(v => v.FechaVenta >= new DateTime(2026, 11, 24, 7, 0, 0) && v.FechaVenta <= new DateTime(2026, 11, 24, 12, 0, 0))
-                .ToListAsync();
-            if (ventasUtc.Any())
-            {
-                foreach (var v in ventasUtc)
-                {
-                    v.FechaVenta = v.FechaVenta.AddHours(-4);
-                }
             }
 
             await context.SaveChangesAsync();

@@ -19,9 +19,13 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence.Repositories
 
         public async Task<decimal> GetTotalGastosPorTurnoAsync(Guid turnoCajaId, CancellationToken cancellationToken = default)
         {
-            return await _dbSet
+            // Compatible con SQLite: evita SumAsync directo sobre columnas decimal
+            var montos = await _dbSet
                 .Where(g => g.TurnoCajaId == turnoCajaId && g.Activo)
-                .SumAsync(g => g.Monto, cancellationToken);
+                .Select(g => g.Monto)
+                .ToListAsync(cancellationToken);
+
+            return montos.Sum();
         }
     }
 }

@@ -1,3 +1,4 @@
+using DC_BOUTIQUE.Core.Domain.Helpers;
 using DC_BOUTIQUE.Core.Application.Interfaces;
 using DC_BOUTIQUE.Infrastructure.Identity.Contexts;
 using DC_BOUTIQUE.Infrastructure.Identity.Entities;
@@ -14,12 +15,11 @@ namespace DC_BOUTIQUE.Infrastructure.Identity
     {
         public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            var provider = configuration["DatabaseProvider"] ?? "SqlServer";
+            var provider = configuration["DatabaseProvider"] ?? "Sqlite";
 
             if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
             {
-                var sqliteConn = configuration.GetConnectionString("SqliteConnection") 
-                    ?? "Data Source=DC_BOUTIQUE_LOCAL.db;Cache=Shared";
+                var sqliteConn = DatabasePathHelper.GetSqliteConnectionString();
 
                 services.AddDbContext<IdentityContext>(options =>
                 {

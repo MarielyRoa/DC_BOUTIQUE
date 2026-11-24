@@ -199,6 +199,32 @@ namespace DC_BOUTIQUE.Core.Application.Services
             p.AplicaImpuesto = dto.AplicaImpuesto;
 
             await _unitOfWork.Productos.UpdateAsync(p, cancellationToken);
+
+            // Actualizar variantes existentes si se enviaron en el formulario de edición
+            if (dto.Variantes != null && dto.Variantes.Count > 0)
+            {
+                foreach (var vDto in dto.Variantes)
+                {
+                    if (vDto.Id.HasValue && vDto.Id.Value != Guid.Empty)
+                    {
+                        var varianteExistente = await _unitOfWork.ProductoVariantes.GetByIdAsync(vDto.Id.Value, cancellationToken);
+                        if (varianteExistente != null && varianteExistente.ProductoId == id)
+                        {
+                            varianteExistente.Talla = vDto.Talla.Trim().ToUpper();
+                            varianteExistente.Color = vDto.Color.Trim();
+                            if (!string.IsNullOrWhiteSpace(vDto.Sku))
+                            {
+                                varianteExistente.Sku = vDto.Sku.Trim().ToUpper();
+                            }
+                            varianteExistente.StockActual = vDto.StockActual;
+                            varianteExistente.StockMinimoAlerta = vDto.StockMinimoAlerta;
+                            varianteExistente.ConcurrencyToken = Guid.NewGuid();
+                            await _unitOfWork.ProductoVariantes.UpdateAsync(varianteExistente, cancellationToken);
+                        }
+                    }
+                }
+            }
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success("Prenda actualizada exitosamente.");
@@ -236,18 +262,20 @@ namespace DC_BOUTIQUE.Core.Application.Services
 
                 foreach (var m in movimientos)
                 {
-                    await _unitOfWork.MovimientosInventario.DeleteAsync(m.Id, cancellationToken);
+                    await _unitOfWork.MovimientosInventario.HardDeleteAsync(m.Id, cancellationToken);
                 }
 
                 foreach (var v in p.Variantes)
                 {
-                    await _unitOfWork.ProductoVariantes.DeleteAsync(v.Id, cancellationToken);
+                    await _unitOfWork.ProductoVariantes.HardDeleteAsync(v.Id, cancellationToken);
                 }
 
-                await _unitOfWork.Productos.DeleteAsync(p.Id, cancellationToken);
+                await _unitOfWork.Productos.HardDeleteAsync(p.Id, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                return Result.Success($"Prenda '{p.Nombre}' eliminada exitosamente del catálogo.");
+                Helpers.UploadFileHelper.DeleteDirectory(p.Id, "productos");
+
+                return Result.Success($"Prenda '{p.Nombre}' eliminada permanentemente de la base de datos.");
             }
         }
 

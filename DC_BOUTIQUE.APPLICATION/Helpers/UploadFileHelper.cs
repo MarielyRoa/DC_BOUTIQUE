@@ -29,9 +29,8 @@ namespace DC_BOUTIQUE.Core.Application.Helpers
                 return currentImagePath ?? string.Empty;
             }
 
-            // Construir ruta física
-            string baseFolder = Path.Combine("wwwroot", "images", folder, id);
-            string physicalPath = Path.Combine(Directory.GetCurrentDirectory(), baseFolder);
+            // Construir ruta física en ProgramData\DC_BOUTIQUE\Images\{folder}\{id} (fuera de Program Files)
+            string physicalPath = Path.Combine(DatabasePathHelper.GetImagesDirectory(folder), id);
 
             if (!Directory.Exists(physicalPath))
             {
@@ -104,9 +103,8 @@ namespace DC_BOUTIQUE.Core.Application.Helpers
                 return currentImagePath ?? string.Empty;
             }
 
-            // Construir ruta física
-            string baseFolder = Path.Combine("wwwroot", "images", folder, id);
-            string physicalPath = Path.Combine(Directory.GetCurrentDirectory(), baseFolder);
+            // Construir ruta física en ProgramData\DC_BOUTIQUE\Images\{folder}\{id} (fuera de Program Files)
+            string physicalPath = Path.Combine(DatabasePathHelper.GetImagesDirectory(folder), id);
 
             if (!Directory.Exists(physicalPath))
             {
@@ -165,11 +163,20 @@ namespace DC_BOUTIQUE.Core.Application.Helpers
             try
             {
                 string cleanPath = relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-                string fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cleanPath.StartsWith("wwwroot") ? cleanPath.Substring(7).TrimStart(Path.DirectorySeparatorChar) : cleanPath);
-
-                if (File.Exists(fullPath))
+                if (cleanPath.StartsWith($"images{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
                 {
-                    File.Delete(fullPath);
+                    string subPath = cleanPath.Substring(7);
+                    string programDataPath = Path.Combine(DatabasePathHelper.GetImagesDirectory(), subPath);
+                    if (File.Exists(programDataPath))
+                    {
+                        File.Delete(programDataPath);
+                    }
+                }
+
+                string legacyPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cleanPath.StartsWith("wwwroot") ? cleanPath.Substring(7).TrimStart(Path.DirectorySeparatorChar) : cleanPath);
+                if (File.Exists(legacyPath))
+                {
+                    File.Delete(legacyPath);
                 }
             }
             catch
@@ -185,10 +192,16 @@ namespace DC_BOUTIQUE.Core.Application.Helpers
         {
             try
             {
-                string dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", folder, id);
-                if (Directory.Exists(dirPath))
+                string programDataDir = Path.Combine(DatabasePathHelper.GetImagesDirectory(folder), id);
+                if (Directory.Exists(programDataDir))
                 {
-                    Directory.Delete(dirPath, recursive: true);
+                    Directory.Delete(programDataDir, recursive: true);
+                }
+
+                string legacyDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", folder, id);
+                if (Directory.Exists(legacyDir))
+                {
+                    Directory.Delete(legacyDir, recursive: true);
                 }
             }
             catch

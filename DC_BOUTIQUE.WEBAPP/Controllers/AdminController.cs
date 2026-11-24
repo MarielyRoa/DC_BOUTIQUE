@@ -29,9 +29,12 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
             decimal totalVentasHoy = ventasHoy.Sum(v => v.TotalNeto);
             int cantidadVentasHoy = ventasHoy.Count;
 
-            decimal ventasMes = await _unitOfWork.Ventas.GetAllQuery()
+            // Compatible con SQLite: evita SumAsync directo sobre decimal
+            var montosMes = await _unitOfWork.Ventas.GetAllQuery()
                 .Where(v => v.FechaVenta >= primerDiaMes && v.Activo)
-                .SumAsync(v => v.TotalNeto);
+                .Select(v => v.TotalNeto)
+                .ToListAsync();
+            decimal ventasMes = montosMes.Sum();
 
             // Turno de caja actual
             var ultimoTurno = await _unitOfWork.TurnosCaja.GetAllQuery()

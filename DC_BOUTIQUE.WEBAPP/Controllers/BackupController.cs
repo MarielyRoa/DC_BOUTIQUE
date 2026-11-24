@@ -1,3 +1,4 @@
+using DC_BOUTIQUE.Core.Application.Helpers;
 using DC_BOUTIQUE.Core.Application.Interfaces;
 using DC_BOUTIQUE.WEBAPP.Middlewares;
 using Microsoft.AspNetCore.Mvc;
@@ -81,7 +82,7 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
             try
             {
                 string safeFileName = Path.GetFileName(fileName);
-                string fullPath = Path.Combine(Directory.GetCurrentDirectory(), "Backups", safeFileName);
+                string fullPath = Path.Combine(DatabasePathHelper.GetBackupDirectory(), safeFileName);
 
                 if (!System.IO.File.Exists(fullPath))
                 {

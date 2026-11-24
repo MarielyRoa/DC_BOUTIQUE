@@ -99,39 +99,37 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
                         : RedirectToAction("Index", "Admin");
                 }
 
-                // Autenticación exitosa en Identity
-                var roleName = authResponse.Roles.FirstOrDefault() ?? "Vendedor";
-                var activeRole = roleName.Equals("Administrador", StringComparison.OrdinalIgnoreCase)
-                    ? Core.Domain.Common.Enums.RolUsuario.Administrador
-                    : Core.Domain.Common.Enums.RolUsuario.Vendedor;
-
-                // Sincronizar el Id con la tabla de Dominio dbo.Usuarios para integridad de claves foráneas
+                // Autenticación exitosa en Identity — validar estado real en tabla de Dominio dbo.Usuarios
                 var domainUserRecord = await _usuarioService.GetByNombreUsuarioAsync(authResponse.UserName);
                 if (domainUserRecord == null)
                 {
-                    var syncId = Guid.TryParse(authResponse.Id, out Guid parsedId) ? parsedId : Guid.NewGuid();
-                    await _usuarioService.CreateAsync(new SaveUsuarioDto
-                    {
-                        Id = syncId,
-                        NombreCompleto = $"{authResponse.FirstName} {authResponse.LastName}".Trim(),
-                        NombreUsuario = authResponse.UserName,
-                        Password = model.Password,
-                        Rol = activeRole,
-                        Cedula = "402-0000000-0"
-                    });
-                    domainUserRecord = await _usuarioService.GetByNombreUsuarioAsync(authResponse.UserName);
+                    // Si el usuario fue eliminado permanentemente del módulo Usuarios & Permisos, no permitir acceso ni recrearlo
+                    ModelState.AddModelError("", "Usuario no identificado o eliminado del sistema.");
+                    return View(model);
                 }
 
-                Guid finalUserId = domainUserRecord?.Id ?? (Guid.TryParse(authResponse.Id, out Guid g) ? g : Guid.NewGuid());
+                if (!domainUserRecord.Activo)
+                {
+                    ModelState.AddModelError("", "Este usuario se encuentra inactivo. Contacte al administrador.");
+                    return View(model);
+                }
+
+                var activeRole = domainUserRecord.Rol;
+                Guid finalUserId = domainUserRecord.Id;
 
                 var identityUserVm = new UsuarioViewModel
                 {
                     Id = finalUserId,
-                    NombreCompleto = $"{authResponse.FirstName} {authResponse.LastName}".Trim(),
-                    NombreUsuario = authResponse.UserName,
+                    NombreCompleto = !string.IsNullOrWhiteSpace(domainUserRecord.NombreCompleto)
+                        ? domainUserRecord.NombreCompleto
+                        : $"{authResponse.FirstName} {authResponse.LastName}".Trim(),
+                    NombreUsuario = domainUserRecord.NombreUsuario,
                     Rol = activeRole,
-                    Activo = true,
-                    FechaCreacion = DateTime.UtcNow
+                    Cedula = domainUserRecord.Cedula,
+                    Telefono = domainUserRecord.Telefono,
+                    PorcentajeComision = domainUserRecord.PorcentajeComision,
+                    Activo = domainUserRecord.Activo,
+                    FechaCreacion = domainUserRecord.FechaCreacion
                 };
 
                 HttpContext.Session.SetString("user", JsonSerializer.Serialize(identityUserVm));

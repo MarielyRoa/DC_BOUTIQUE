@@ -2,10 +2,12 @@ using DC_BOUTIQUE.Core.Application.DTOs.Clientes;
 using DC_BOUTIQUE.Core.Application.Extensions;
 using DC_BOUTIQUE.Core.Application.Interfaces;
 using DC_BOUTIQUE.Core.Application.ViewModels.Clientes;
+using DC_BOUTIQUE.WEBAPP.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DC_BOUTIQUE.WEBAPP.Controllers
 {
+    [AuthorizeAdmin]
     public class ClienteController : Controller
     {
         private readonly IClienteService _clienteService;

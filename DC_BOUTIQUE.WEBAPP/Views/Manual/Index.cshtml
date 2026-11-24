@@ -1,0 +1,791 @@
+@{
+    ViewData["Title"] = "Manual / Guía de Uso Interactiva";
+    bool esAdmin = ViewBag.EsAdmin ?? true;
+    string rutaBd = ViewBag.RutaBaseDatos ?? @"C:\ProgramData\DC_BOUTIQUE\Data\DC_BOUTIQUE.db";
+    string rutaBackups = ViewBag.RutaBackups ?? @"C:\ProgramData\DC_BOUTIQUE\Backups";
+}
+
+@section Styles {
+    <style>
+        .manual-hero {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 55%, #0f172a 100%);
+            color: #ffffff;
+            border-radius: 16px;
+            padding: 28px 30px;
+            margin-bottom: 22px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(2, 132, 199, 0.22);
+        }
+
+        .manual-hero::after {
+            content: "";
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: rgba(56, 189, 248, 0.16);
+            pointer-events: none;
+        }
+
+        .manual-search-box {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14);
+            max-width: 620px;
+        }
+
+        .manual-search-box input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 15px;
+            color: var(--dc-text);
+            padding: 6px 4px;
+        }
+
+        .manual-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .manual-tab-btn {
+            border: 1.5px solid var(--dc-border);
+            background: #ffffff;
+            color: #334155;
+            border-radius: 25px;
+            padding: 8px 18px;
+            font-size: 14.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .manual-tab-btn:hover {
+            border-color: var(--dc-sky);
+            color: var(--dc-sky-hover);
+            background: var(--dc-sky-subtle);
+        }
+
+        .manual-tab-btn.active {
+            background: linear-gradient(135deg, var(--dc-sky), var(--dc-sky-light));
+            color: #ffffff;
+            border-color: var(--dc-sky);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+        }
+
+        .guide-card {
+            background: #ffffff;
+            border: 1.5px solid var(--dc-border);
+            border-radius: 14px;
+            padding: 22px;
+            height: 100%;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .guide-card:hover {
+            border-color: var(--dc-sky-light);
+            box-shadow: 0 8px 22px rgba(2, 132, 199, 0.09);
+            transform: translateY(-2px);
+        }
+
+        .guide-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            background: var(--dc-sky-bg);
+            color: var(--dc-sky-hover);
+            flex-shrink: 0;
+        }
+
+        .guide-step-list {
+            list-style: none;
+            padding: 0;
+            margin: 12px 0 16px 0;
+        }
+
+        .guide-step-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 7px 0;
+            border-bottom: 1px dashed #e2e8f0;
+            font-size: 14.5px;
+            color: #334155;
+        }
+
+        .guide-step-list li:last-child {
+            border-bottom: none;
+        }
+
+        .step-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--dc-sky);
+            color: #ffffff;
+            font-size: 12.5px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            border: 1px solid var(--dc-border);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .checklist-item:hover {
+            border-color: var(--dc-sky-light);
+            background: #f8fafc;
+        }
+
+        .checklist-item.completed {
+            background: #ecfdf5;
+            border-color: #6ee7b7;
+        }
+
+        .checklist-item.completed .checklist-title {
+            text-decoration: line-through;
+            color: #047857;
+        }
+
+        .kbd-key {
+            display: inline-block;
+            padding: 3px 9px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #0f172a;
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-bottom-width: 3px;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+
+        .faq-item {
+            border: 1px solid var(--dc-border);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .faq-question {
+            width: 100%;
+            text-align: left;
+            background: #ffffff;
+            border: none;
+            padding: 14px 18px;
+            font-size: 15.5px;
+            font-weight: 700;
+            color: var(--dc-text);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .faq-question:hover {
+            background: #f8fafc;
+            color: var(--dc-sky-hover);
+        }
+
+        .faq-answer {
+            display: none;
+            padding: 0 18px 16px 18px;
+            color: #475569;
+            font-size: 14.5px;
+            line-height: 1.6;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 12px;
+        }
+
+        .faq-item.open .faq-answer {
+            display: block;
+        }
+
+        .faq-item.open .faq-chevron {
+            transform: rotate(180deg);
+        }
+
+        .faq-chevron {
+            transition: transform 0.2s ease;
+            color: var(--dc-sky);
+        }
+
+        .path-chip {
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-family: Consolas, monospace;
+            font-size: 13px;
+            display: inline-block;
+            word-break: break-all;
+        }
+
+        @@media print {
+            .dc-sidebar, .dc-topbar, .no-print {
+                display: none !important;
+            }
+            .dc-content {
+                margin: 0 !important;
+                width: 100% !important;
+                padding: 0 !important;
+            }
+            .faq-answer {
+                display: block !important;
+            }
+        }
+    </style>
+}
+
+<!-- ENCABEZADO INTERACTIVO -->
+<div class="manual-hero">
+    <div class="row align-items-center g-3">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-white text-primary px-3 py-2 fw-bold" style="border-radius: 20px; font-size: 13px;">
+                    <i class="bi bi-book-half me-1"></i> Centro de Ayuda Interactivo
+                </span>
+                <span class="badge bg-info bg-opacity-25 text-white border border-info border-opacity-50 px-3 py-2" style="border-radius: 20px; font-size: 13px;">
+                    100% Local · SQLite Autónomo
+                </span>
+            </div>
+            <h1 class="fw-bold mb-2" style="font-family:'Cormorant Garamond', serif; font-size: 34px;">
+                Manual y Guía de Uso — DC_BOUTIQUE
+            </h1>
+            <p class="mb-3 opacity-90" style="font-size: 15.5px;">
+                Aprende paso a paso cómo operar la caja, cobrar prendas en el POS, controlar inventario, gestionar clientas y respaldar tu base de datos.
+            </p>
+
+            <!-- Buscador instantáneo -->
+            <div class="manual-search-box no-print">
+                <i class="bi bi-search text-primary fs-5 ms-2"></i>
+                <input type="text" id="manualSearchInput" placeholder="Buscar en el manual... (ej: abrir caja, vender, prenda, backup, contraseña, anular)" autocomplete="off" />
+                <button type="button" id="clearSearchBtn" class="btn btn-sm btn-light d-none" title="Limpiar búsqueda">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-lg-4 text-lg-end no-print">
+            <button type="button" onclick="window.print()" class="btn btn-light text-primary fw-bold px-4 py-2 shadow-sm me-2 mb-2" style="border-radius: 10px;">
+                <i class="bi bi-printer me-1"></i> Imprimir / Guardar PDF
+            </button>
+            <a asp-controller="Pos" asp-action="Index" class="btn btn-warning text-dark fw-bold px-4 py-2 shadow-sm mb-2" style="border-radius: 10px;">
+                <i class="bi bi-cart4 me-1"></i> Ir al POS [F1]
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- PESTAÑAS INTERACTIVAS DE FILTRADO -->
+<div class="manual-tabs no-print" id="manualTabs">
+    <button type="button" class="manual-tab-btn active" data-filter="all">
+        <i class="bi bi-grid-fill"></i> Todo el Manual
+    </button>
+    <button type="button" class="manual-tab-btn" data-filter="inicio">
+        <i class="bi bi-rocket-takeoff"></i> Rutina Diaria
+    </button>
+    <button type="button" class="manual-tab-btn" data-filter="pos">
+        <i class="bi bi-cart-check"></i> Cobro / POS
+    </button>
+    <button type="button" class="manual-tab-btn" data-filter="caja">
+        <i class="bi bi-cash-coin"></i> Caja & Cuadre
+    </button>
+    <button type="button" class="manual-tab-btn" data-filter="inventario">
+        <i class="bi bi-tag"></i> Prendas & Stock
+    </button>
+    <button type="button" class="manual-tab-btn" data-filter="clientes">
+        <i class="bi bi-people"></i> Clientes & Usuarios
+    </button>
+    <button type="button" class="manual-tab-btn" data-filter="backup">
+        <i class="bi bi-hdd-network"></i> Respaldos & BD
+    </button>
+    <button type="button" class="manual-tab-btn" data-filter="faq">
+        <i class="bi bi-question-circle"></i> Preguntas Frecuentes
+    </button>
+</div>
+
+<!-- MENSAJE SIN RESULTADOS EN BUSCADOR -->
+<div id="manualNoResults" class="dc-card text-center py-5 d-none">
+    <i class="bi bi-search display-4 text-muted d-block mb-2"></i>
+    <h5 class="fw-bold">No encontramos temas con ese término</h5>
+    <p class="text-muted mb-3">Intenta buscar palabras como: <strong>caja</strong>, <strong>venta</strong>, <strong>prenda</strong>, <strong>stock</strong>, <strong>cliente</strong> o <strong>backup</strong>.</p>
+    <button type="button" class="btn btn-dc-sky" onclick="resetManualFilters()">Mostrar todo el manual</button>
+</div>
+
+<!-- SECCIÓN 1: CHECKLIST INTERACTIVO DE OPERACIÓN DIARIA -->
+<div class="dc-card manual-section" data-category="inicio" data-keywords="rutina diaria empezar primer dia checklist pasos abrir cerrar cobrar respaldo">
+    <div class="dc-card-header flex-wrap gap-2">
+        <div>
+            <h4 class="dc-card-title d-flex align-items-center gap-2">
+                <i class="bi bi-check2-square text-primary"></i>
+                Lista Interactiva de Operación Diaria
+            </h4>
+            <small class="text-muted">Marca cada paso conforme aprendas o completes tu jornada en la boutique (tu progreso se guarda automáticamente).</small>
+        </div>
+        <div class="d-flex align-items-center gap-3 no-print">
+            <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-bold" id="checklistProgressLabel" style="font-size: 14px;">0 / 6 completados</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetChecklist()">Reiniciar</button>
+        </div>
+    </div>
+
+    <div class="progress mb-3 no-print" style="height: 10px; border-radius: 10px;">
+        <div id="checklistProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%; transition: width 0.3s ease;"></div>
+    </div>
+
+    <div class="row g-2" id="dailyChecklist">
+        <div class="col-md-6">
+            <label class="checklist-item" data-step="step1">
+                <input type="checkbox" class="form-check-input mt-0" style="width:20px; height:20px;" />
+                <div>
+                    <div class="fw-bold checklist-title">1. Iniciar sesión con tu usuario</div>
+                    <small class="text-muted">Admin para gestión completa o Cajera para mostrador y cobro.</small>
+                </div>
+            </label>
+        </div>
+        <div class="col-md-6">
+            <label class="checklist-item" data-step="step2">
+                <input type="checkbox" class="form-check-input mt-0" style="width:20px; height:20px;" />
+                <div>
+                    <div class="fw-bold checklist-title">2. Abrir Turno de Caja (Fondo Inicial)</div>
+                    <small class="text-muted">Ve a <strong>Caja & Turnos</strong> e ingresa el efectivo inicial en gaveta.</small>
+                </div>
+            </label>
+        </div>
+        <div class="col-md-6">
+            <label class="checklist-item" data-step="step3">
+                <input type="checkbox" class="form-check-input mt-0" style="width:20px; height:20px;" />
+                <div>
+                    <div class="fw-bold checklist-title">3. Verificar prendas y stock disponible</div>
+                    <small class="text-muted">Registra prendas nuevas o usa <strong>Entrada Rápida Stock</strong> al llegar mercancía.</small>
+                </div>
+            </label>
+        </div>
+        <div class="col-md-6">
+            <label class="checklist-item" data-step="step4">
+                <input type="checkbox" class="form-check-input mt-0" style="width:20px; height:20px;" />
+                <div>
+                    <div class="fw-bold checklist-title">4. Facturar ventas en Cobro / POS [F1]</div>
+                    <small class="text-muted">Selecciona la prenda, elige la clienta, método de pago e imprime el ticket.</small>
+                </div>
+            </label>
+        </div>
+        <div class="col-md-6">
+            <label class="checklist-item" data-step="step5">
+                <input type="checkbox" class="form-check-input mt-0" style="width:20px; height:20px;" />
+                <div>
+                    <div class="fw-bold checklist-title">5. Hacer Cuadre y Cerrar Caja al final del día</div>
+                    <small class="text-muted">Usa el botón rojo <strong>Cerrar Caja</strong>, cuenta el efectivo físico y cierra el turno.</small>
+                </div>
+            </label>
+        </div>
+        <div class="col-md-6">
+            <label class="checklist-item" data-step="step6">
+                <input type="checkbox" class="form-check-input mt-0" style="width:20px; height:20px;" />
+                <div>
+                    <div class="fw-bold checklist-title">6. Generar copia de seguridad semanal</div>
+                    <small class="text-muted">En <strong>Base de Datos / Backup</strong> haz clic en Generar y guárdala en una USB.</small>
+                </div>
+            </label>
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN 2: TARJETAS DETALLADAS POR MÓDULO -->
+<div class="row g-4 mb-4">
+    <!-- MÓDULO POS -->
+    <div class="col-lg-6 manual-section" data-category="pos" data-keywords="pos cobrar vender factura ticket efectivo tarjeta transferencia carrito cliente anular venta escaner f1 f2">
+        <div class="guide-card">
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="guide-icon"><i class="bi bi-cart-check-fill"></i></div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Punto de Venta — Cobro / POS [F1]</h5>
+                        <small class="text-muted">Facturación rápida en mostrador y emisión de comprobantes</small>
+                    </div>
+                </div>
+                <ul class="guide-step-list">
+                    <li><span class="step-num">1</span><div><strong>Requisito previo:</strong> Debe existir una caja abierta. Si no hay turno abierto, el sistema te llevará automáticamente a <em>Apertura de Caja</em>.</div></li>
+                    <li><span class="step-num">2</span><div><strong>Agregar prendas:</strong> Haz clic sobre cualquier tarjeta de prenda en el catálogo, filtra por categoría o presiona <span class="kbd-key">F2</span> para buscar por nombre, código o lector de barras.</div></li>
+                    <li><span class="step-num">3</span><div><strong>Seleccionar clienta:</strong> En el panel derecho elige <em>Consumidor Final</em> o busca una clienta registrada para que su nombre aparezca en la factura y el historial.</div></li>
+                    <li><span class="step-num">4</span><div><strong>Método de pago y cambio:</strong> Selecciona <em>Efectivo</em> (el sistema calcula la devuelta automáticamente), <em>Tarjeta</em> o <em>Transferencia</em>, y pulsa <strong>Finalizar Venta</strong>.</div></li>
+                    <li><span class="step-num">5</span><div><strong>Reimprimir o Anular:</strong> En <strong>Historial de Ventas</strong> puedes reimprimir cualquier ticket o anular una factura (el stock de la prenda regresa automáticamente al inventario).</div></li>
+                </ul>
+            </div>
+            <div class="d-flex gap-2 flex-wrap pt-2 border-top no-print">
+                <a asp-controller="Pos" asp-action="Index" class="btn btn-sm btn-dc-sky">Abrir POS <i class="bi bi-arrow-right ms-1"></i></a>
+                <a asp-controller="Pos" asp-action="Ventas" class="btn btn-sm btn-outline-sky">Historial de Ventas</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÓDULO CAJA & TURNOS -->
+    <div class="col-lg-6 manual-section" data-category="caja" data-keywords="caja turno abrir cerrar cuadre arqueo fondo inicial gastos egresos sobrante faltante efectivo">
+        <div class="guide-card">
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="guide-icon" style="background:#fee2e2; color:#dc2626;"><i class="bi bi-cash-stack"></i></div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Caja, Gastos & Cuadre de Turno</h5>
+                        <small class="text-muted">Control estricto del efectivo físico en gaveta</small>
+                    </div>
+                </div>
+                <ul class="guide-step-list">
+                    <li><span class="step-num">1</span><div><strong>Apertura de Caja:</strong> Al iniciar el día ingresa el <em>Fondo Inicial</em> (dinero en efectivo con el que arranca la caja para dar cambio).</div></li>
+                    <li><span class="step-num">2</span><div><strong>Registrar Gastos / Egresos:</strong> Si sacas dinero de caja chica (ej. agua, mensajería, fundas), regístralo en <em>Registrar Gasto</em> para que se descuente del efectivo esperado.</div></li>
+                    <li><span class="step-num">3</span><div><strong>Cuadre y Cierre:</strong> Pulsa el botón rojo <strong>Cerrar Caja</strong> en la barra superior. Cuenta el dinero físico en gaveta e introdúcelo; el sistema compara <em>Fondo + Ventas Efectivo − Gastos</em> contra tu conteo.</div></li>
+                    <li><span class="step-num">4</span><div><strong>Diagnóstico automático:</strong> El cierre te mostrará si cuadró <span class="badge bg-success-subtle text-success">A lo justo</span>, si <span class="badge bg-warning-subtle text-warning">Sobró</span> o si <span class="badge bg-danger-subtle text-danger">Faltó</span> efectivo, y genera el ticket de cierre.</div></li>
+                </ul>
+            </div>
+            <div class="d-flex gap-2 flex-wrap pt-2 border-top no-print">
+                <a asp-controller="Caja" asp-action="Index" class="btn btn-sm btn-dc-sky">Ir a Caja & Turnos <i class="bi bi-arrow-right ms-1"></i></a>
+                <a asp-controller="Caja" asp-action="Historial" class="btn btn-sm btn-outline-sky">Historial de Cajas</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÓDULO INVENTARIO Y PRENDAS -->
+    <div class="col-lg-6 manual-section" data-category="inventario" data-keywords="ropa accesorios prendas categorias crear editar foto imagen talla color sku stock entrada rapida kardex movimientos ajuste merma">
+        <div class="guide-card">
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="guide-icon" style="background:#fef3c7; color:#d97706;"><i class="bi bi-tag-fill"></i></div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Ropa & Accesorios, Categorías y Stock</h5>
+                        <small class="text-muted">Administración del catálogo y reabastecimiento</small>
+                    </div>
+                </div>
+                <ul class="guide-step-list">
+                    <li><span class="step-num">1</span><div><strong>Categorías primero:</strong> Crea tus familias en <strong>Categorías</strong> (ej. Vestidos, Blusas, Pantalones, Joyería). Solo se pueden eliminar categorías que no tengan prendas asignadas.</div></li>
+                    <li><span class="step-num">2</span><div><strong>Registrar Prendas:</strong> En <strong>Ropa & Accesorios → Nueva Prenda</strong> indica nombre, categoría, precio de venta, foto (opcional) y una o varias combinaciones de <em>Talla, Color y Stock inicial</em>.</div></li>
+                    <li><span class="step-num">3</span><div><strong>Entrada Rápida de Stock:</strong> Cuando llegue mercancía nueva de una prenda existente, entra a <strong>Entrada Rápida Stock</strong>, filtra por categoría, elige la prenda/talla e ingresa la cantidad recibida.</div></li>
+                    <li><span class="step-num">4</span><div><strong>Kardex / Movimientos:</strong> Registra automáticamente cada entrada, venta, anulación o ajuste físico con fecha, usuario y stock anterior/posterior.</div></li>
+                </ul>
+            </div>
+            @if (esAdmin)
+            {
+                <div class="d-flex gap-2 flex-wrap pt-2 border-top no-print">
+                    <a asp-controller="Producto" asp-action="Index" class="btn btn-sm btn-dc-sky">Ropa & Accesorios <i class="bi bi-arrow-right ms-1"></i></a>
+                    <a asp-controller="Categoria" asp-action="Index" class="btn btn-sm btn-outline-sky">Categorías</a>
+                    <a asp-controller="Inventario" asp-action="EntradaRapida" class="btn btn-sm btn-outline-sky">Entrada Rápida</a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- MÓDULO CLIENTES Y USUARIOS -->
+    <div class="col-lg-6 manual-section" data-category="clientes" data-keywords="clientes clientas telefono cedula rnc usuarios permisos cajero vendedor administrador activar desactivar eliminar contraseña pin">
+        <div class="guide-card">
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="guide-icon" style="background:#ede9fe; color:#7c3aed;"><i class="bi bi-people-fill"></i></div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Clientes, Usuarios y Permisos</h5>
+                        <small class="text-muted">Directorio de clientas y control de acceso por rol</small>
+                    </div>
+                </div>
+                <ul class="guide-step-list">
+                    <li><span class="step-num">1</span><div><strong>Cartera de Clientes:</strong> Guarda nombres, teléfono, cédula/RNC y notas de tus clientas frecuentes. Al eliminar una clienta, se borra de la base de datos conservando el historial contable de facturas.</div></li>
+                    <li><span class="step-num">2</span><div><strong>Rol Administrador:</strong> Acceso total al Dashboard, catálogo, categorías, inventario, clientes, usuarios y respaldos de base de datos.</div></li>
+                    <li><span class="step-num">3</span><div><strong>Rol Cajero / Vendedor:</strong> Acceso enfocado solo en el <em>POS [F1]</em>, <em>Caja & Arqueo</em> e <em>Historiales</em>, protegiendo tu configuración y respaldos.</div></li>
+                    <li><span class="step-num">4</span><div><strong>Activar / Desactivar / Eliminar:</strong> En <strong>Usuarios & Permisos</strong> puedes pausar temporalmente a una cajera (botón rojo/verde) o eliminarla definitivamente si no tiene historial operativo.</div></li>
+                </ul>
+            </div>
+            @if (esAdmin)
+            {
+                <div class="d-flex gap-2 flex-wrap pt-2 border-top no-print">
+                    <a asp-controller="Cliente" asp-action="Index" class="btn btn-sm btn-dc-sky">Ver Clientes <i class="bi bi-arrow-right ms-1"></i></a>
+                    <a asp-controller="Usuario" asp-action="Index" class="btn btn-sm btn-outline-sky">Usuarios & Permisos</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN 3: BASE DE DATOS SQLITE Y RESPALDOS -->
+<div class="dc-card manual-section" data-category="backup" data-keywords="backup respaldo base de datos sqlite programdata usb copiar restaurar sin internet local instalacion">
+    <div class="dc-card-header">
+        <h4 class="dc-card-title d-flex align-items-center gap-2">
+            <i class="bi bi-hdd-network-fill text-primary"></i>
+            Base de Datos Local (SQLite) y Respaldos Seguros
+        </h4>
+        @if (esAdmin)
+        {
+            <a asp-controller="Backup" asp-action="Index" class="btn btn-sm btn-dc-sky no-print">
+                <i class="bi bi-database-add me-1"></i> Ir a Respaldos
+            </a>
+        }
+    </div>
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-7">
+            <p class="mb-2">
+                <strong>DC_BOUTIQUE</strong> utiliza una base de datos <strong>SQLite local autónoma</strong>: no necesita internet, no requiere SQL Server ni pagos mensuales en la nube, y tus datos permanecen 100% privados en tu computadora.
+            </p>
+            <ul class="guide-step-list mb-0">
+                <li><span class="step-num">1</span><div><strong>Generar respaldo en 1 clic:</strong> Entra a <strong>Base de Datos / Backup</strong> y pulsa <em>Generar Respaldo Ahora</em>. Se creará un archivo <code>.db</code> con fecha y hora exacta.</div></li>
+                <li><span class="step-num">2</span><div><strong>Guardar fuera de la PC:</strong> Pulsa el botón <em>Descargar</em> y copia ese archivo a una memoria USB o Google Drive al menos una vez por semana para protegerte ante daños físicos del equipo.</div></li>
+                <li><span class="step-num">3</span><div><strong>Actualizaciones seguras:</strong> Al instalar una nueva versión de DC_BOUTIQUE, tus datos y fotos en <code>ProgramData</code> se conservan intactos automáticamente.</div></li>
+            </ul>
+        </div>
+        <div class="col-lg-5">
+            <div class="p-3 rounded-3 border bg-light">
+                <div class="fw-bold text-dark mb-2"><i class="bi bi-folder2-open text-primary me-1"></i> Ubicaciones en esta PC:</div>
+                <div class="mb-2">
+                    <small class="text-muted d-block fw-semibold">Base de Datos Principal:</small>
+                    <span class="path-chip">@rutaBd</span>
+                </div>
+                <div>
+                    <small class="text-muted d-block fw-semibold">Carpeta de Respaldos:</small>
+                    <span class="path-chip">@rutaBackups</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN 4: ATAJOS DE TECLADO + PREGUNTAS FRECUENTES -->
+<div class="row g-4">
+    <!-- ATAJOS -->
+    <div class="col-lg-4 manual-section" data-category="pos" data-keywords="atajos teclado teclas rapidas f1 f2 escape enter imprimir">
+        <div class="dc-card h-100 mb-0">
+            <h5 class="dc-card-title mb-3"><i class="bi bi-keyboard text-primary me-2"></i>Atajos de Teclado</h5>
+            <table class="table-dc">
+                <tbody>
+                    <tr>
+                        <td><span class="kbd-key">F1</span></td>
+                        <td>Abrir directamente el módulo <strong>Cobro / POS</strong> desde cualquier pantalla.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="kbd-key">F2</span></td>
+                        <td>Enfocar el buscador / escáner de código de barras en el POS.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="kbd-key">Enter</span></td>
+                        <td>Agregar prenda escaneada o confirmar búsqueda rápida.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="kbd-key">Ctrl + P</span></td>
+                        <td>Imprimir comprobante, ticket o esta guía de uso.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- FAQ INTERACTIVO -->
+    <div class="col-lg-8 manual-section" data-category="faq" data-keywords="preguntas frecuentes ayuda errores luz apagon internet contraseña caja abierta otra computadora migrar">
+        <div class="dc-card h-100 mb-0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="dc-card-title mb-0"><i class="bi bi-patch-question-fill text-primary me-2"></i>Preguntas Frecuentes (Haz clic para desplegar)</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary no-print" onclick="toggleAllFaq()">Expandir / Contraer</button>
+            </div>
+
+            <div class="faq-item open" data-faq-keywords="pos abrir caja turno bloqueo facturar">
+                <button type="button" class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Por qué al entrar al POS el sistema me manda a Abrir Caja?</span>
+                    <i class="bi bi-chevron-down faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    Por seguridad contable, ninguna venta puede registrarse sin un turno de caja activo. Solo debes ingresar el fondo inicial (puede ser <code>0.00</code> si inicias sin cambio) y pulsar <strong>Abrir Turno</strong>; de inmediato quedarás en el Punto de Venta.
+                </div>
+            </div>
+
+            <div class="faq-item" data-faq-keywords="luz apagon electricidad corte datos perdidos sqlite wal">
+                <button type="button" class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Qué pasa si se va la luz o se apaga la computadora de golpe?</span>
+                    <i class="bi bi-chevron-down faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    El sistema guarda cada venta y movimiento de inventario de inmediato en modo seguro <strong>SQLite WAL</strong> (Write-Ahead Logging). Al encender la computadora nuevamente y abrir DC_BOUTIQUE, tu turno abierto, ventas y existencias seguirán intactos.
+                </div>
+            </div>
+
+            <div class="faq-item" data-faq-keywords="internet wifi offline desconectado funciona">
+                <button type="button" class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Funciona el sistema si se cae el internet en la boutique?</span>
+                    <i class="bi bi-chevron-down faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    <strong>Sí, 100%.</strong> Toda la información y la base de datos viven dentro de tu propia computadora. Puedes facturar, abrir/cerrar caja, registrar prendas y generar respaldos sin conexión a internet.
+                </div>
+            </div>
+
+            <div class="faq-item" data-faq-keywords="contraseña clave pin cambiar usuario cajero olvidada">
+                <button type="button" class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Cómo cambio la contraseña o desactivo a una cajera?</span>
+                    <i class="bi bi-chevron-down faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    Ingresa como Administrador y ve a <strong>Usuarios & Permisos</strong>. Pulsa el ícono de lápiz para editar el nombre, rol o nueva contraseña/PIN, o el botón de pausa/activación para deshabilitar o rehabilitar su acceso al instante.
+                </div>
+            </div>
+
+            <div class="faq-item" data-faq-keywords="otra computadora cambiar pc migrar pasar datos respaldo">
+                <button type="button" class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Cómo paso todos mis datos a una computadora nueva?</span>
+                    <i class="bi bi-chevron-down faq-chevron"></i>
+                </button>
+                <div class="faq-answer">
+                    1) Instala DC_BOUTIQUE en la computadora nueva con el instalador.<br />
+                    2) Copia el archivo <code>DC_BOUTIQUE.db</code> (y la carpeta <code>Images</code> si tienes fotos) desde <code>C:\ProgramData\DC_BOUTIQUE\</code> de la PC vieja hacia la misma ruta en la PC nueva.<br />
+                    3) Abre el programa y tendrás todo tu inventario, clientes y ventas exactamente igual.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const STORAGE_KEY = 'dc_boutique_manual_checklist_v1';
+        let activeCategory = 'all';
+
+        // 1. Acordeón FAQ
+        function toggleFaq(btn) {
+            btn.closest('.faq-item').classList.toggle('open');
+        }
+
+        function toggleAllFaq() {
+            const items = document.querySelectorAll('.faq-item');
+            const anyClosed = Array.from(items).some(i => !i.classList.contains('open'));
+            items.forEach(i => i.classList.toggle('open', anyClosed));
+        }
+
+        // 2. Filtros por pestaña y búsqueda en tiempo real
+        function applyManualFilters() {
+            const term = document.getElementById('manualSearchInput').value.trim().toLowerCase();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            clearBtn.classList.toggle('d-none', term.length === 0);
+
+            const sections = document.querySelectorAll('.manual-section');
+            let visibleCount = 0;
+
+            sections.forEach(sec => {
+                const cat = sec.getAttribute('data-category');
+                const keywords = (sec.getAttribute('data-keywords') || '').toLowerCase();
+                const textContent = sec.innerText.toLowerCase();
+
+                const matchesCat = (activeCategory === 'all') || (cat === activeCategory);
+                const matchesSearch = !term || keywords.includes(term) || textContent.includes(term);
+
+                const show = matchesCat && matchesSearch;
+                sec.classList.toggle('d-none', !show);
+                if (show) {
+                    visibleCount++;
+                    // Si hay término de búsqueda, expandir automáticamente FAQs coincidentes
+                    if (term && cat === 'faq') {
+                        sec.querySelectorAll('.faq-item').forEach(faq => {
+                            const fText = faq.innerText.toLowerCase() + ' ' + (faq.getAttribute('data-faq-keywords') || '');
+                            faq.classList.toggle('open', fText.includes(term));
+                        });
+                    }
+                }
+            });
+
+            document.getElementById('manualNoResults').classList.toggle('d-none', visibleCount > 0);
+        }
+
+        function resetManualFilters() {
+            document.getElementById('manualSearchInput').value = '';
+            activeCategory = 'all';
+            document.querySelectorAll('.manual-tab-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-filter') === 'all');
+            });
+            applyManualFilters();
+        }
+
+        document.querySelectorAll('.manual-tab-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.manual-tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                activeCategory = this.getAttribute('data-filter');
+                applyManualFilters();
+            });
+        });
+
+        document.getElementById('manualSearchInput').addEventListener('input', applyManualFilters);
+        document.getElementById('clearSearchBtn').addEventListener('click', function () {
+            document.getElementById('manualSearchInput').value = '';
+            applyManualFilters();
+            document.getElementById('manualSearchInput').focus();
+        });
+
+        // 3. Checklist interactivo persistente en localStorage
+        function loadChecklist() {
+            let saved = {};
+            try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { saved = {}; }
+
+            document.querySelectorAll('#dailyChecklist .checklist-item').forEach(item => {
+                const key = item.getAttribute('data-step');
+                const cb = item.querySelector('input[type="checkbox"]');
+                const checked = !!saved[key];
+                cb.checked = checked;
+                item.classList.toggle('completed', checked);
+            });
+            updateChecklistProgress();
+        }
+
+        function updateChecklistProgress() {
+            const items = document.querySelectorAll('#dailyChecklist .checklist-item');
+            const total = items.length;
+            let done = 0;
+            const state = {};
+
+            items.forEach(item => {
+                const key = item.getAttribute('data-step');
+                const cb = item.querySelector('input[type="checkbox"]');
+                item.classList.toggle('completed', cb.checked);
+                state[key] = cb.checked;
+                if (cb.checked) done++;
+            });
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            document.getElementById('checklistProgressBar').style.width = pct + '%';
+            document.getElementById('checklistProgressLabel').textContent = `${done} / ${total} completados`;
+        }
+
+        function resetChecklist() {
+            localStorage.removeItem(STORAGE_KEY);
+            loadChecklist();
+        }
+
+        document.querySelectorAll('#dailyChecklist input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', updateChecklistProgress);
+        });
+
+        loadChecklist();
+    </script>
+}

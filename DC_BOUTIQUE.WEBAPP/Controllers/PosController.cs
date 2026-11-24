@@ -3,10 +3,12 @@ using DC_BOUTIQUE.Core.Application.Extensions;
 using DC_BOUTIQUE.Core.Application.Interfaces;
 using DC_BOUTIQUE.Core.Application.ViewModels.Ventas;
 using DC_BOUTIQUE.Core.Domain.Interfaces;
+using DC_BOUTIQUE.WEBAPP.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DC_BOUTIQUE.WEBAPP.Controllers
 {
+    [AuthorizeSession]
     public class PosController : Controller
     {
         private readonly IVentaService _ventaService;
@@ -205,21 +207,6 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
         public async Task<IActionResult> Ventas(DateTime? fecha)
         {
             var targetFecha = fecha ?? DC_BOUTIQUE.Core.Application.Helpers.DominicanDateTime.Now.Date;
-
-            // Corregir desfase de ventas generadas anteriormente con hora UTC (+4h)
-            var ventasUtc = _unitOfWork.Ventas.GetAllQuery()
-                .Where(v => v.FechaVenta >= new DateTime(2026, 11, 24, 7, 0, 0) && v.FechaVenta <= new DateTime(2026, 11, 24, 12, 0, 0))
-                .ToList();
-            if (ventasUtc.Any())
-            {
-                foreach (var v in ventasUtc)
-                {
-                    v.FechaVenta = v.FechaVenta.AddHours(-4);
-                    await _unitOfWork.Ventas.UpdateAsync(v);
-                }
-                await _unitOfWork.SaveChangesAsync();
-            }
-
             var ventas = await _ventaService.GetVentasDelDiaAsync(targetFecha);
             var model = ventas.Select(v => v.ToViewModel()).ToList();
 

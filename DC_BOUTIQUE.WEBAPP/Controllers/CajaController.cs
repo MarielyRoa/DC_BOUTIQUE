@@ -3,10 +3,12 @@ using DC_BOUTIQUE.Core.Application.Extensions;
 using DC_BOUTIQUE.Core.Application.Interfaces;
 using DC_BOUTIQUE.Core.Application.ViewModels.Caja;
 using DC_BOUTIQUE.Core.Domain.Interfaces;
+using DC_BOUTIQUE.WEBAPP.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DC_BOUTIQUE.WEBAPP.Controllers
 {
+    [AuthorizeSession]
     public class CajaController : Controller
     {
         private readonly ICajaService _cajaService;
@@ -192,7 +194,6 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
         [HttpGet]
         public async Task<IActionResult> Historial(DateTime? fechaDesde, DateTime? fechaHasta)
         {
-            await _cajaService.LimpiarTurnosCerradosAntiguosAsync();
             var turnosDto = await _cajaService.GetHistorialTurnosAsync(fechaDesde, fechaHasta);
             var model = turnosDto.Select(t => t.ToViewModel()).ToList();
 

@@ -71,7 +71,7 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
 
                 await context.SaveChangesAsync();
 
-                var productosPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "productos");
+                var productosPath = DatabasePathHelper.GetImagesDirectory("productos");
                 if (Directory.Exists(productosPath))
                 {
                     foreach (var dir in Directory.GetDirectories(productosPath))

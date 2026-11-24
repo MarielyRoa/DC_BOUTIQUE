@@ -1,4 +1,5 @@
 using DC_BOUTIQUE.Core.Application.ViewModels.Common;
+using DC_BOUTIQUE.WEBAPP.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -6,6 +7,7 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
 {
     public class HomeController : Controller
     {
+        [AuthorizeSession]
         public IActionResult Index()
         {
             var role = HttpContext.Session.GetString("UserRole");
