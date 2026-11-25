@@ -20,6 +20,13 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence.Contexts
         public DbSet<PagoVenta> PagosVenta => Set<PagoVenta>();
         public DbSet<MovimientoInventario> MovimientosInventario => Set<MovimientoInventario>();
 
+        // Entidades del Centro del Desarrollador
+        public DbSet<RegistroLogTecnico> RegistrosLogTecnico => Set<RegistroLogTecnico>();
+        public DbSet<AuditoriaTecnica> AuditoriasTecnicas => Set<AuditoriaTecnica>();
+        public DbSet<ConfiguracionRespaldos> ConfiguracionesRespaldos => Set<ConfiguracionRespaldos>();
+        public DbSet<ConfiguracionTecnica> ConfiguracionesTecnicas => Set<ConfiguracionTecnica>();
+        public DbSet<RegistroMantenimiento> RegistrosMantenimiento => Set<RegistroMantenimiento>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

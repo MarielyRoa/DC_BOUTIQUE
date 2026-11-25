@@ -1,5 +1,8 @@
 using System.Data;
 using System.Diagnostics;
+using DC_BOUTIQUE.Core.Application.DTOs.Usuarios;
+using DC_BOUTIQUE.Core.Application.Interfaces;
+using DC_BOUTIQUE.Core.Domain.Common.Enums;
 using DC_BOUTIQUE.Core.Domain.Helpers;
 using DC_BOUTIQUE.Infrastructure.Identity.Contexts;
 using DC_BOUTIQUE.Infrastructure.Identity.Entities;
@@ -7,6 +10,7 @@ using DC_BOUTIQUE.Infrastructure.Identity.Seeds;
 using DC_BOUTIQUE.Infrastructure.Persistence;
 using DC_BOUTIQUE.Infrastructure.Persistence.Contexts;
 using DC_BOUTIQUE.WEBAPP.Middlewares;
+using DC_BOUTIQUE.WEBAPP.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +63,7 @@ namespace DC_BOUTIQUE.WEBAPP.Extensions
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped<ValidateUserSession>();
+            services.AddHostedService<AutomatedBackupBackgroundService>();
 
             return services;
         }
@@ -107,6 +112,21 @@ namespace DC_BOUTIQUE.WEBAPP.Extensions
                 await DefaultUserRoles.SeedAsync(roleManager);
                 await DefaultAdminUser.SeedAsync(userManager);
                 await DefaultCashierUser.SeedAsync(userManager);
+                await DefaultDeveloperUser.SeedAsync(userManager);
+
+                // Garantizar perfil de dominio para la cuenta Desarrollador en cualquier instalación nueva o existente
+                var usuarioService = services.GetRequiredService<IUsuarioService>();
+                if (!await usuarioService.ExisteDesarrolladorAsync())
+                {
+                    await usuarioService.CrearDesarrolladorInicialAsync(new SaveUsuarioDto
+                    {
+                        NombreCompleto = $"{DefaultDeveloperUser.DefaultFirstName} {DefaultDeveloperUser.DefaultLastName}".Trim(),
+                        NombreUsuario = DefaultDeveloperUser.DefaultUserName,
+                        Password = DefaultDeveloperUser.DefaultPassword,
+                        Rol = RolUsuario.Desarrollador,
+                        Activo = true
+                    });
+                }
             }
             catch (Exception ex)
             {

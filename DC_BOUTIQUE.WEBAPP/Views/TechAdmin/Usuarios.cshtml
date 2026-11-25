@@ -1,0 +1,225 @@
+@model DC_BOUTIQUE.Core.Application.DTOs.TechAdmin.TechUsersViewDto
+@using DC_BOUTIQUE.Core.Domain.Common.Enums
+@{
+    Layout = "_TechLayout";
+    ViewData["Title"] = "Usuarios y Accesos";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark">Administración Técnica de Usuarios y Accesos</h4>
+        <div class="text-muted small">
+            Supervisión de cuentas, estados, último acceso, restablecimiento seguro de contraseñas y registro de intentos fallidos (sin exponer contraseñas ni hashes)
+        </div>
+    </div>
+    <span class="tech-badge-info">@Model.Usuarios.Count usuario(s) registrados</span>
+</div>
+
+<!-- Tabla de Todos los Usuarios -->
+<div class="tech-card">
+    <div class="tech-card-header">
+        <h5 class="tech-card-title">Cuentas Registradas en el Sistema</h5>
+        <span class="small text-muted">Cuentas con operaciones comerciales solo se desactivan para conservar el historial.</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="tech-table">
+            <thead>
+                <tr>
+                    <th>Nombre y Usuario</th>
+                    <th>Correo Electrónico</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Último Acceso</th>
+                    <th class="text-end">Acciones Técnicas</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model.Usuarios)
+                {
+                    var roleBadge = u.Rol switch
+                    {
+                        RolUsuario.Desarrollador => "tech-badge-info",
+                        RolUsuario.Administrador => "badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25",
+                        _ => "badge bg-light text-dark border"
+                    };
+                    var roleLabel = u.Rol switch
+                    {
+                        RolUsuario.Desarrollador => "Desarrollador",
+                        RolUsuario.Administrador => "Administrador",
+                        _ => "Cajero / Vendedor"
+                    };
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-dark">
+                                @u.NombreCompleto
+                                @if (u.EsPrincipal)
+                                {
+                                    <span class="badge bg-warning bg-opacity-25 text-dark border border-warning ms-1" style="font-size: 10.5px;">Principal</span>
+                                }
+                            </div>
+                            <div class="small font-monospace text-muted">@@@u.NombreUsuario</div>
+                        </td>
+                        <td class="small text-muted">@u.Correo</td>
+                        <td><span class="@roleBadge">@roleLabel</span></td>
+                        <td>
+                            <span class="@(u.Activo ? "tech-badge-ok" : "tech-badge-err")">
+                                @(u.Activo ? "Activa" : "Inactiva")
+                            </span>
+                            @if (u.TieneOperacionesComerciales)
+                            {
+                                <div class="text-muted" style="font-size: 11px;">Con historial comercial</div>
+                            }
+                        </td>
+                        <td class="small text-muted text-nowrap">
+                            @(u.UltimoAccesoLocal.HasValue ? u.UltimoAccesoLocal.Value.ToString("dd/MM/yyyy HH:mm") : "Sin registro aún")
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <button type="button"
+                                    class="btn btn-sm btn-tech-outline me-1"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#resetPwdModal"
+                                    data-userid="@u.Id"
+                                    data-username="@u.NombreUsuario"
+                                    data-fullname="@u.NombreCompleto"
+                                    data-isdev="@(u.Rol == RolUsuario.Desarrollador ? "true" : "false")">
+                                Restablecer Clave
+                            </button>
+
+                            @if (!u.EsPrincipal && u.Rol != RolUsuario.Desarrollador)
+                            {
+                                <form asp-action="CambiarEstadoUsuario" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="usuarioId" value="@u.Id" />
+                                    <input type="hidden" name="activar" value="@(!u.Activo ? "true" : "false")" />
+                                    <button type="submit" class="btn btn-sm @(u.Activo ? "btn-outline-danger" : "btn-outline-success")">
+                                        @(u.Activo ? "Desactivar" : "Activar")
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="small text-muted">Cuenta protegida</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Intentos Fallidos de Inicio de Sesión -->
+    <div class="col-12 col-lg-6">
+        <div class="tech-card h-100 mb-0">
+            <div class="tech-card-header">
+                <h5 class="tech-card-title">Intentos Fallidos de Inicio de Sesión (@Model.IntentosFallidos.Count)</h5>
+            </div>
+            @if (Model.IntentosFallidos.Any())
+            {
+                <div class="table-responsive">
+                    <table class="tech-table">
+                        <thead><tr><th>Fecha</th><th>Usuario</th><th>Motivo</th></tr></thead>
+                        <tbody>
+                            @foreach (var f in Model.IntentosFallidos)
+                            {
+                                <tr>
+                                    <td class="small text-muted text-nowrap">@f.FechaEventoLocal.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="font-monospace small text-dark">@(f.UsuarioRelacionado ?? "—")</td>
+                                    <td class="small text-warning fw-semibold">@f.Mensaje</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="small text-muted">Sin intentos fallidos de acceso registrados.</div>
+            }
+        </div>
+    </div>
+
+    <!-- Eventos de Acceso y Cambios de Seguridad -->
+    <div class="col-12 col-lg-6">
+        <div class="tech-card h-100 mb-0">
+            <div class="tech-card-header">
+                <h5 class="tech-card-title">Eventos de Acceso y Cambios de Cuenta (@Model.EventosAcceso.Count)</h5>
+            </div>
+            @if (Model.EventosAcceso.Any())
+            {
+                <div class="table-responsive">
+                    <table class="tech-table">
+                        <thead><tr><th>Fecha</th><th>Operador</th><th>Acción</th><th>Detalle</th></tr></thead>
+                        <tbody>
+                            @foreach (var e in Model.EventosAcceso)
+                            {
+                                <tr>
+                                    <td class="small text-muted text-nowrap">@e.FechaAccionLocal.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="font-monospace small text-primary">@e.UsuarioTecnico</td>
+                                    <td class="small fw-semibold text-dark">@e.Accion</td>
+                                    <td class="small text-muted">@e.Detalle</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="small text-muted">Sin eventos de seguridad recientes.</div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal Restablecer Contraseña Seguro -->
+<div class="modal fade" id="resetPwdModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Restablecimiento Seguro de Contraseña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="RestablecerPasswordUsuario" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="usuarioId" id="resetUserId" />
+                    <div class="mb-3">
+                        <div class="small text-muted">Cuenta seleccionada:</div>
+                        <div class="fw-bold text-dark" id="resetUserLabel"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Nueva Contraseña</label>
+                        <input type="password" name="nuevaPassword" id="resetNewPwd" class="form-control" required minlength="4" autocomplete="new-password" />
+                        <div class="form-text" id="resetPwdHint">Mínimo 4 caracteres (8 para cuentas Desarrollador).</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Confirmar Nueva Contraseña</label>
+                        <input type="password" name="confirmarPassword" class="form-control" required minlength="4" autocomplete="new-password" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-tech-outline btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-tech btn-sm">Guardar Nueva Contraseña</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const resetModal = document.getElementById('resetPwdModal');
+        if (resetModal) {
+            resetModal.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                document.getElementById('resetUserId').value = btn.getAttribute('data-userid');
+                document.getElementById('resetUserLabel').textContent = btn.getAttribute('data-fullname') + ' (' + btn.getAttribute('data-username') + ')';
+                const isDev = btn.getAttribute('data-isdev') === 'true';
+                document.getElementById('resetNewPwd').minLength = isDev ? 8 : 4;
+            });
+        }
+    </script>
+}

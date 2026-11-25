@@ -430,8 +430,25 @@
             @{
                 var activeUser = UserSession.GetUser();
                 var displayName = activeUser?.NombreCompleto ?? "Administrador";
-                var displayRole = activeUser != null ? (activeUser.Rol == DC_BOUTIQUE.Core.Domain.Common.Enums.RolUsuario.Administrador ? "Administrador" : "Cajero / Vendedor") : "Administrador";
-                var esAdmin = activeUser == null || activeUser.Rol == DC_BOUTIQUE.Core.Domain.Common.Enums.RolUsuario.Administrador;
+                var esDesarrollador = activeUser != null && activeUser.Rol == DC_BOUTIQUE.Core.Domain.Common.Enums.RolUsuario.Desarrollador;
+                var displayRole = activeUser == null
+                    ? "Administrador"
+                    : activeUser.Rol switch
+                    {
+                        DC_BOUTIQUE.Core.Domain.Common.Enums.RolUsuario.Desarrollador => "Desarrollador",
+                        DC_BOUTIQUE.Core.Domain.Common.Enums.RolUsuario.Administrador => "Administrador",
+                        _ => "Cajero / Vendedor"
+                    };
+                var esAdmin = activeUser == null || activeUser.Rol == DC_BOUTIQUE.Core.Domain.Common.Enums.RolUsuario.Administrador || esDesarrollador;
+            }
+            @if (esDesarrollador)
+            {
+                <a asp-controller="TechAdmin" asp-action="Index" class="btn btn-sm fw-bold px-3 rounded-pill shadow-sm d-flex align-items-center gap-1"
+                   style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; font-size: 12px; white-space: nowrap;"
+                   title="Cambiar al Centro del Desarrollador sin cerrar sesión">
+                    <i class="bi bi-tools"></i>
+                    <span>Centro del Desarrollador</span>
+                </a>
             }
             <div class="dropdown">
                 <button class="btn btn-sm btn-outline-light text-dark bg-white border d-flex align-items-center gap-2 px-3 py-1 dropdown-toggle shadow-sm" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px;">

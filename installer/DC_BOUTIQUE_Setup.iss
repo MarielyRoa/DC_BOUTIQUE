@@ -38,6 +38,7 @@ Name: "{commonappdata}\{#MyAppName}"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\Data"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\Data\Keys"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\Backups"; Permissions: users-full
+Name: "{commonappdata}\{#MyAppName}\Updates"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\Images"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\Images\productos"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\AppWindowProfile"; Permissions: users-full

@@ -35,7 +35,15 @@
                     {
                         <tr>
                             <td>
-                                <div class="fw-bold">@u.NombreCompleto</div>
+                                <div class="fw-bold d-flex align-items-center gap-2">
+                                    <span>@u.NombreCompleto</span>
+                                    @if (u.EsPrincipal)
+                                    {
+                                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle" style="font-size: 11px;">
+                                            <i class="bi bi-star-fill text-warning me-1"></i>Principal
+                                        </span>
+                                    }
+                                </div>
                                 <small class="text-muted">ID: @u.Id.ToString()[..8]...</small>
                             </td>
                             <td>
@@ -70,7 +78,7 @@
                                 <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-dark me-1" title="Editar">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-                                @if (u.NombreUsuario != "admin")
+                                @if (!u.EsPrincipal && u.Rol != DC_BOUTIQUE.Core.Domain.Common.Enums.RolUsuario.Desarrollador)
                                 {
                                     @if (u.Activo)
                                     {

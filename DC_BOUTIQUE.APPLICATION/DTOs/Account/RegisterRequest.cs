@@ -9,6 +9,6 @@ namespace DC_BOUTIQUE.Core.Application.DTOs.Account
         public string ConfirmPassword { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
         public string? Cedula { get; set; }
-        public string Role { get; set; } = "Vendedor";
+        public string Role { get; set; } = "Cajero";
     }
 }

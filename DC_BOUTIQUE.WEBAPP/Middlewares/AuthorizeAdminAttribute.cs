@@ -20,7 +20,7 @@ namespace DC_BOUTIQUE.WEBAPP.Middlewares
             try
             {
                 var user = JsonSerializer.Deserialize<UsuarioViewModel>(userJson);
-                if (user == null || user.Rol != RolUsuario.Administrador)
+                if (user == null || (user.Rol != RolUsuario.Administrador && user.Rol != RolUsuario.Desarrollador))
                 {
                     if (context.Controller is Controller controller)
                     {

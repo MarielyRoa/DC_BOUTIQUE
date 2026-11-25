@@ -17,6 +17,7 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
         private readonly IClienteService _clienteService;
         private readonly ITicketPrintingService _ticketPrintingService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ITechAdminService _techService;
 
         public PosController(
             IVentaService ventaService,
@@ -24,7 +25,8 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
             ICajaService cajaService,
             IClienteService clienteService,
             ITicketPrintingService ticketPrintingService,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            ITechAdminService techService)
         {
             _ventaService = ventaService;
             _productoService = productoService;
@@ -32,6 +34,7 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
             _clienteService = clienteService;
             _ticketPrintingService = ticketPrintingService;
             _unitOfWork = unitOfWork;
+            _techService = techService;
         }
 
         [HttpGet]
@@ -167,11 +170,32 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
 
             if (!result.Succeeded || result.Data == null)
             {
+                await _techService.LogEventAsync(
+                    Core.Domain.Common.Enums.TipoLogTecnico.Ventas,
+                    "Warning",
+                    "PosController.ProcesarVenta",
+                    result.Message ?? "Error al procesar venta en POS.",
+                    null,
+                    HttpContext.Session.GetString("UserName"));
                 return Json(new { success = false, message = result.Message });
             }
 
             var ventaRealizada = result.Data;
-            string ticketHtml = _ticketPrintingService.GenerateTicketHtml(ventaRealizada);
+            string ticketHtml = string.Empty;
+            try
+            {
+                ticketHtml = _ticketPrintingService.GenerateTicketHtml(ventaRealizada);
+            }
+            catch (Exception printEx)
+            {
+                await _techService.LogEventAsync(
+                    Core.Domain.Common.Enums.TipoLogTecnico.Impresion,
+                    "Error",
+                    "PosController.ProcesarVenta",
+                    $"Error al generar ticket HTML para factura {ventaRealizada.NumeroFactura}: {printEx.Message}",
+                    printEx.ToString(),
+                    HttpContext.Session.GetString("UserName"));
+            }
 
             return Json(new
             {
@@ -193,8 +217,22 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
             var venta = await _ventaService.GetByIdAsync(id);
             if (venta == null) return NotFound();
 
-            string html = _ticketPrintingService.GenerateTicketHtml(venta);
-            return Content(html, "text/html");
+            try
+            {
+                string html = _ticketPrintingService.GenerateTicketHtml(venta);
+                return Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                await _techService.LogEventAsync(
+                    Core.Domain.Common.Enums.TipoLogTecnico.Impresion,
+                    "Error",
+                    "PosController.ImprimirTicket",
+                    $"Error al imprimir ticket de factura {venta.NumeroFactura}: {ex.Message}",
+                    ex.ToString(),
+                    HttpContext.Session.GetString("UserName"));
+                return StatusCode(500, "No se pudo generar el comprobante de impresión.");
+            }
         }
 
         [HttpGet]

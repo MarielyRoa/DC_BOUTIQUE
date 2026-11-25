@@ -1,0 +1,213 @@
+@model DC_BOUTIQUE.Core.Application.DTOs.TechAdmin.TechMaintenanceHistoryViewDto
+@using DC_BOUTIQUE.Core.Application.Services
+@using DC_BOUTIQUE.Core.Domain.Common.Enums
+@{
+    Layout = "_TechLayout";
+    ViewData["Title"] = "Historial de Mantenimiento";
+    string? desdeStr = Model.Desde?.ToString("yyyy-MM-dd");
+    string? hastaStr = Model.Hasta?.ToString("yyyy-MM-dd");
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark">Historial de Mantenimiento y Actualizaciones</h4>
+        <div class="text-muted small">
+            Bitácora de intervenciones técnicas (soporte local o vía AnyDesk) y procedimiento seguro de actualización con Inno Setup 6
+        </div>
+    </div>
+    <span class="tech-badge-info">Versión Instalada: v@(Model.VersionInstalada)</span>
+</div>
+
+<div class="row g-3 mb-3">
+    <!-- Registrar Nueva Intervención Técnica -->
+    <div class="col-12 col-lg-7">
+        <div class="tech-card h-100 mb-0">
+            <div class="tech-card-header">
+                <h5 class="tech-card-title">Registrar Intervención Técnica</h5>
+            </div>
+
+            <form asp-action="RegistrarMantenimiento" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="row g-2 mb-2">
+                    <div class="col-12 col-md-5">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Tipo de Mantenimiento</label>
+                        <select name="Tipo" class="form-select form-select-sm" required>
+                            @foreach (TipoMantenimiento t in Enum.GetValues(typeof(TipoMantenimiento)))
+                            {
+                                <option value="@t">@TechAdminService.FormatMaintenanceType(t)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Versión</label>
+                        <input type="text" name="VersionSistema" value="@Model.VersionInstalada" class="form-control form-control-sm font-monospace" required />
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Resultado</label>
+                        <select name="Resultado" class="form-select form-select-sm">
+                            <option value="Exitoso">Exitoso</option>
+                            <option value="Parcial / En seguimiento">Parcial / En seguimiento</option>
+                            <option value="Requiere revisión">Requiere revisión</option>
+                            <option value="Fallido">Fallido</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small text-muted text-uppercase fw-semibold">Descripción del Problema *</label>
+                    <textarea name="DescripcionProblema" rows="2" class="form-control form-control-sm" required placeholder="Ej. Impresora térmica desconfigurada al cambiar puerto USB (soporte vía AnyDesk)"></textarea>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small text-muted text-uppercase fw-semibold">Solución Aplicada *</label>
+                    <textarea name="SolucionAplicada" rows="2" class="form-control form-control-sm" required placeholder="Ej. Se reasignó la impresora predeterminada en Windows y se validó con ticket de prueba 80mm"></textarea>
+                </div>
+
+                <div class="row g-2 align-items-center mb-3">
+                    <div class="col-12 col-md-7">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Observaciones Adicionales</label>
+                        <input type="text" name="Observaciones" class="form-control form-control-sm" placeholder="Opcional (ej. sesión AnyDesk confirmada con propietaria)" />
+                    </div>
+                    <div class="col-12 col-md-5 pt-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="chkRespaldoPrev" name="RespaldoPrevioRealizado" value="true" checked />
+                            <label class="form-check-label small fw-semibold" for="chkRespaldoPrev">Se realizó respaldo previo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-tech btn-sm">Guardar Registro de Mantenimiento</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sección 9: Procedimiento Seguro de Actualización con Inno Setup 6 -->
+    <div class="col-12 col-lg-5">
+        <div class="tech-card h-100 mb-0">
+            <div class="tech-card-header">
+                <h5 class="tech-card-title">Actualización Segura (Inno Setup 6)</h5>
+                <span class="tech-badge-ok">Offline</span>
+            </div>
+            <p class="small text-muted mb-2">
+                DC_BOUTIQUE se actualiza mediante nuevas versiones del instalador de Windows sin depender de Internet. Los datos y respaldos permanecen intactos en <span class="tech-code">C:\ProgramData\DC_BOUTIQUE</span>.
+            </p>
+            <ol class="small text-muted ps-3 mb-3">
+                <li>Usa este botón antes de ejecutar el nuevo instalador: crea respaldo previo y verifica integridad SQLite.</li>
+                <li>Cierra DC_BOUTIQUE y ejecuta el nuevo instalador <code>.exe</code> de Inno Setup 6.</li>
+                <li>Al abrir la nueva versión, el esquema evoluciona automáticamente sin perder datos.</li>
+            </ol>
+
+            <form asp-action="PrepararActualizacionInnoSetup" method="post" class="tech-subpanel">
+                @Html.AntiForgeryToken()
+                <div class="mb-2">
+                    <label class="form-label small text-muted text-uppercase fw-semibold">Nueva Versión a Instalar</label>
+                    <input type="text" name="versionDestino" class="form-control form-control-sm font-monospace" placeholder="Ej. 1.1.0" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small text-muted text-uppercase fw-semibold">Notas de la Actualización</label>
+                    <input type="text" name="notas" class="form-control form-control-sm" placeholder="Ej. Mejoras de reportes y respaldo automático" />
+                </div>
+                <button type="submit" class="btn btn-tech-outline btn-sm w-100 fw-semibold">
+                    Respaldar, Verificar Integridad y Registrar Actualización
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros del Historial -->
+<div class="tech-card">
+    <form asp-action="Mantenimiento" method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-muted text-uppercase fw-semibold">Desde</label>
+            <input type="date" name="desde" value="@desdeStr" class="form-control" />
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-muted text-uppercase fw-semibold">Hasta</label>
+            <input type="date" name="hasta" value="@hastaStr" class="form-control" />
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label small text-muted text-uppercase fw-semibold">Tipo de Mantenimiento</label>
+            <select name="tipo" class="form-select">
+                <option value="">Todos los tipos</option>
+                @foreach (TipoMantenimiento t in Enum.GetValues(typeof(TipoMantenimiento)))
+                {
+                    <option value="@t" selected="@(Model.Tipo == t)">@TechAdminService.FormatMaintenanceType(t)</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-tech w-100">Filtrar</button>
+            <a asp-action="Mantenimiento" class="btn btn-tech-outline">Limpiar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabla del Historial de Mantenimiento -->
+<div class="tech-card">
+    <div class="tech-card-header">
+        <h5 class="tech-card-title">Intervenciones Registradas (@Model.Registros.Count)</h5>
+    </div>
+
+    @if (Model.Registros.Any())
+    {
+        <div class="table-responsive">
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Tipo</th>
+                        <th>Versión</th>
+                        <th>Problema y Solución</th>
+                        <th>Respaldo Previo</th>
+                        <th>Resultado</th>
+                        <th>Registrado Por</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.Registros)
+                    {
+                        <tr>
+                            <td class="text-muted text-nowrap">@r.FechaMantenimientoLocal.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td><span class="tech-badge-info">@TechAdminService.FormatMaintenanceType(r.Tipo)</span></td>
+                            <td class="font-monospace small text-dark text-nowrap">
+                                @if (!string.IsNullOrWhiteSpace(r.VersionAnterior))
+                                {
+                                    <span>v@(r.VersionAnterior) → v@(r.VersionSistema)</span>
+                                }
+                                else
+                                {
+                                    <span>v@(r.VersionSistema)</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark small">@r.DescripcionProblema</div>
+                                <div class="text-muted small mt-1"><strong>Solución:</strong> @r.SolucionAplicada</div>
+                                @if (!string.IsNullOrWhiteSpace(r.Observaciones))
+                                {
+                                    <div class="text-muted small fst-italic">Obs: @r.Observaciones</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="@(r.RespaldoPrevioRealizado ? "tech-badge-ok" : "badge bg-light text-muted border")">
+                                    @(r.RespaldoPrevioRealizado ? "Sí" : "No")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="@(r.Resultado.Contains("Fallido") ? "tech-badge-err" : (r.Resultado.Contains("Exitoso") || r.Resultado.Contains("Listo") ? "tech-badge-ok" : "tech-badge-warn"))">
+                                    @r.Resultado
+                                </span>
+                            </td>
+                            <td class="font-monospace small text-primary">@r.RegistradoPor</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-muted small">No se encontraron intervenciones con los filtros seleccionados.</div>
+    }
+</div>

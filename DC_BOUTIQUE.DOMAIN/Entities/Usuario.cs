@@ -11,6 +11,7 @@ namespace DC_BOUTIQUE.Core.Domain.Entities
         public string? Cedula { get; set; }
         public string? Telefono { get; set; }
         public RolUsuario Rol { get; set; } = RolUsuario.Vendedor;
+        public bool EsPrincipal { get; set; } = false;
         public decimal PorcentajeComision { get; set; } = 0m;
         public DateTime? UltimoAcceso { get; set; }
 

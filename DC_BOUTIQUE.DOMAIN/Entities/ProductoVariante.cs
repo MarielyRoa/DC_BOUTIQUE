@@ -19,7 +19,7 @@ namespace DC_BOUTIQUE.Core.Domain.Entities
         public int StockMinimoAlerta { get; set; } = 2;
 
         /// <summary>
-        /// Token de concurrencia optimista compatible con SQLite y SQL Server.
+        /// Token de concurrencia optimista para SQLite.
         /// Se actualiza con Guid.NewGuid() en cada modificación de stock.
         /// </summary>
         public Guid ConcurrencyToken { get; set; } = Guid.NewGuid();

@@ -1,7 +1,10 @@
 @model DC_BOUTIQUE.Core.Application.ViewModels.Usuarios.LoginViewModel
+@using DC_BOUTIQUE.Core.Application.DTOs.Usuarios
+@using DC_BOUTIQUE.Core.Domain.Common.Enums
 @{
     Layout = null;
     ViewData["Title"] = "Acceso al Sistema — Dahiana Corporan Boutique";
+    var usuariosDisponibles = ViewBag.UsuariosDisponibles as List<UsuarioDto> ?? new List<UsuarioDto>();
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -140,10 +143,16 @@
                 <form asp-controller="Auth" asp-action="Login" method="post" novalidate>
                     @Html.AntiForgeryToken()
 
-                    <!-- Campo Usuario / Código de Empleado -->
-                    <div class="dc-form-group">
+                    <!-- Campo Usuario / Código de Empleado (escritura libre + selector desplegable) -->
+                    <div class="dc-form-group dc-user-picker-wrap">
                         <div class="dc-label-row">
                             <label asp-for="Username" class="dc-label">Usuario o Código de Operador</label>
+                            @if (usuariosDisponibles.Any())
+                            {
+                                <button type="button" class="dc-pin-trigger" id="dcUserListLabelBtn">
+                                    <span>Seleccionar usuario</span>
+                                </button>
+                            }
                         </div>
                         <div class="dc-input-wrapper">
                             <svg class="dc-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -151,11 +160,43 @@
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
                             <input asp-for="Username"
+                                   id="UsernameInput"
                                    class="dc-input"
-                                   placeholder="Ej. dcorporan o CAJA-01"
-                                   autocomplete="username"
+                                   style="padding-right: 44px;"
+                                   placeholder="Escribe o selecciona un usuario"
+                                   autocomplete="off"
                                    autofocus />
+                            @if (usuariosDisponibles.Any())
+                            {
+                                <button type="button" class="dc-password-toggle dc-user-picker-toggle" id="dcUserDropdownToggle" aria-label="Desplegar lista de usuarios">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                            }
                         </div>
+
+                        @if (usuariosDisponibles.Any())
+                        {
+                            <div class="dc-user-dropdown" id="dcUserDropdown" role="listbox" aria-label="Usuarios registrados">
+                                @foreach (var u in usuariosDisponibles)
+                                {
+                                    var inicial = string.IsNullOrWhiteSpace(u.NombreCompleto) ? "U" : u.NombreCompleto.Trim()[0].ToString().ToUpperInvariant();
+                                    var rolLabel = u.Rol == RolUsuario.Administrador ? "Administrador" : "Cajero";
+                                    <button type="button"
+                                            class="dc-user-option"
+                                            data-username="@u.NombreUsuario"
+                                            data-search="@($"{u.NombreUsuario} {u.NombreCompleto} {rolLabel}".ToLowerInvariant())">
+                                        <span class="dc-user-avatar">@inicial</span>
+                                        <span class="dc-user-meta">
+                                            <span class="dc-user-name">@u.NombreCompleto</span>
+                                            <span class="dc-user-handle">@@@u.NombreUsuario</span>
+                                        </span>
+                                        <span class="dc-user-role-pill @(u.Rol == RolUsuario.Administrador ? "admin" : "")">@rolLabel</span>
+                                    </button>
+                                }
+                            </div>
+                        }
                         <span asp-validation-for="Username" class="dc-validation-error"></span>
                     </div>
 
@@ -271,9 +312,74 @@
             updateClock();
             setInterval(updateClock, 15000);
 
-            // 2. Mostrar / Ocultar Contraseña
-            const togglePwdBtn = document.getElementById('dcTogglePassword');
+            // 2. Selector desplegable de usuarios existentes (con escritura libre)
+            const userInput = document.getElementById('UsernameInput');
+            const userDropdown = document.getElementById('dcUserDropdown');
+            const userToggleBtn = document.getElementById('dcUserDropdownToggle');
+            const userLabelBtn = document.getElementById('dcUserListLabelBtn');
             const pwdInput = document.getElementById('PasswordInput');
+
+            if (userInput && userDropdown) {
+                const options = Array.from(userDropdown.querySelectorAll('.dc-user-option'));
+
+                function openDropdown(filterText) {
+                    const term = (filterText || '').trim().toLowerCase();
+                    let visibleCount = 0;
+                    options.forEach(opt => {
+                        const hay = opt.getAttribute('data-search') || '';
+                        const match = !term || hay.includes(term);
+                        opt.style.display = match ? 'flex' : 'none';
+                        if (match) visibleCount++;
+                    });
+                    if (visibleCount > 0) {
+                        userDropdown.classList.add('open');
+                        if (userToggleBtn) userToggleBtn.classList.add('rotated');
+                    } else {
+                        closeDropdown();
+                    }
+                }
+
+                function closeDropdown() {
+                    userDropdown.classList.remove('open');
+                    if (userToggleBtn) userToggleBtn.classList.remove('rotated');
+                }
+
+                function toggleDropdown() {
+                    if (userDropdown.classList.contains('open')) {
+                        closeDropdown();
+                    } else {
+                        openDropdown('');
+                        userInput.focus();
+                    }
+                }
+
+                if (userToggleBtn) userToggleBtn.addEventListener('click', toggleDropdown);
+                if (userLabelBtn) userLabelBtn.addEventListener('click', toggleDropdown);
+
+                userInput.addEventListener('focus', () => openDropdown(userInput.value));
+                userInput.addEventListener('input', () => openDropdown(userInput.value));
+                userInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') closeDropdown();
+                });
+
+                options.forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const selectedUser = opt.getAttribute('data-username') || '';
+                        userInput.value = selectedUser;
+                        closeDropdown();
+                        if (pwdInput) pwdInput.focus();
+                    });
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.dc-user-picker-wrap')) {
+                        closeDropdown();
+                    }
+                });
+            }
+
+            // 3. Mostrar / Ocultar Contraseña
+            const togglePwdBtn = document.getElementById('dcTogglePassword');
             if (togglePwdBtn && pwdInput) {
                 togglePwdBtn.addEventListener('click', () => {
                     const isPassword = pwdInput.type === 'password';

@@ -15,29 +15,14 @@ namespace DC_BOUTIQUE.Infrastructure.Identity
     {
         public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            var provider = configuration["DatabaseProvider"] ?? "Sqlite";
+            // Base de datos SQLite local autónoma en C:\ProgramData\DC_BOUTIQUE\Data\DC_BOUTIQUE.db
+            var sqliteConn = DatabasePathHelper.GetSqliteConnectionString();
 
-            if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+            services.AddDbContext<IdentityContext>(options =>
             {
-                var sqliteConn = DatabasePathHelper.GetSqliteConnectionString();
-
-                services.AddDbContext<IdentityContext>(options =>
-                {
-                    options.UseSqlite(sqliteConn, b => b.MigrationsAssembly(typeof(IdentityContext).Assembly.FullName));
-                    options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
-                });
-            }
-            else
-            {
-                var sqlServerConn = configuration.GetConnectionString("DefaultConnection") 
-                    ?? "Server=Gerardine\\SQLEXPRESS;Database=DC_BOUTIQUE;Trusted_Connection=True;TrustServerCertificate=true";
-
-                services.AddDbContext<IdentityContext>(options =>
-                {
-                    options.UseSqlServer(sqlServerConn, b => b.MigrationsAssembly(typeof(IdentityContext).Assembly.FullName));
-                    options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
-                });
-            }
+                options.UseSqlite(sqliteConn);
+                options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+            });
 
             #region Identity Configuration
             services.AddIdentity<AppUser, IdentityRole>(options =>

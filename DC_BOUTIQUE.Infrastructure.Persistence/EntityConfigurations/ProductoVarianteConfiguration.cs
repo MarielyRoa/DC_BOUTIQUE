@@ -15,7 +15,7 @@ namespace DC_BOUTIQUE.Infrastructure.Persistence.EntityConfigurations
             builder.Property(v => v.Talla).IsRequired().HasMaxLength(30);
             builder.Property(v => v.Color).IsRequired().HasMaxLength(50);
 
-            // Token de concurrencia optimista compatible con SQLite y SQL Server
+            // Token de concurrencia optimista para SQLite
             builder.Property(v => v.ConcurrencyToken).IsConcurrencyToken();
 
             builder.HasIndex(v => v.Sku).IsUnique();

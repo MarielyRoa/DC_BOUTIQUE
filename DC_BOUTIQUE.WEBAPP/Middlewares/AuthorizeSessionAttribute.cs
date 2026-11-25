@@ -5,7 +5,7 @@ namespace DC_BOUTIQUE.WEBAPP.Middlewares
 {
     /// <summary>
     /// Protege controladores operativos (POS, Caja, Inicio) exigiendo sesión activa
-    /// de cualquier usuario autenticado (Administrador o Vendedor/Cajero).
+    /// de cualquier usuario autenticado (Desarrollador, Administrador o Cajero/Vendedor).
     /// </summary>
     public class AuthorizeSessionAttribute : ActionFilterAttribute
     {

@@ -1,0 +1,169 @@
+@model DC_BOUTIQUE.Core.Application.DTOs.TechAdmin.TechConfigViewDto
+@using DC_BOUTIQUE.Core.Application.Services
+@{
+    Layout = "_TechLayout";
+    ViewData["Title"] = "Configuración Técnica";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark">Configuración Técnica del Sistema</h4>
+        <div class="text-muted small">Parámetros de aplicación, base de datos SQLite, impresión térmica, configuración regional y resumen de respaldos</div>
+    </div>
+    <a asp-action="ImpresionPrueba" target="_blank" class="btn btn-tech-outline btn-sm">
+        <i class="bi bi-printer me-1"></i> Impresión de Prueba (Ticket)
+    </a>
+</div>
+
+<!-- Bloque 1: Aplicación y Base de Datos (Solo Lectura Segura) -->
+<div class="row g-3 mb-3">
+    <div class="col-12 col-lg-6">
+        <div class="tech-card h-100 mb-0">
+            <div class="tech-card-header">
+                <h5 class="tech-card-title">Aplicación</h5>
+                <span class="tech-badge-ok">@Model.EstadoAplicacion</span>
+            </div>
+            <table class="tech-table">
+                <tbody>
+                    <tr>
+                        <td class="text-muted">Sistema</td>
+                        <td class="text-end fw-bold text-dark">@Model.NombreSistema</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Versión Instalada</td>
+                        <td class="text-end font-monospace text-primary fw-bold">v@(Model.VersionInstalada)</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Entorno de Ejecución</td>
+                        <td class="text-end small text-muted">@Model.EntornoEjecucion</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="tech-card h-100 mb-0">
+            <div class="tech-card-header">
+                <h5 class="tech-card-title">Base de Datos SQLite (Protegida)</h5>
+                <span class="@(Model.SqliteConectada ? "tech-badge-ok" : "tech-badge-err")">
+                    @(Model.SqliteConectada ? "Conectada" : "Error")
+                </span>
+            </div>
+            <div class="mb-2">
+                <div class="small text-muted mb-1">Ubicación Actual (solo lectura — requiere migración controlada para cambiarla)</div>
+                <div class="tech-code d-block py-2 px-2">@Model.RutaBaseDatos</div>
+            </div>
+            <div class="d-flex justify-content-between small text-muted mt-3">
+                <span>Tamaño actual: <strong class="text-dark">@TechAdminService.FormatBytes(Model.TamanoBaseDatosBytes)</strong></span>
+                <span>Modo Journal: <strong class="text-primary">@Model.JournalMode</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario Editable: Impresión + Regional -->
+<form asp-action="GuardarConfiguracionTecnica" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Id" value="@Model.Id" />
+
+    <div class="row g-3 mb-3">
+        <!-- Impresión -->
+        <div class="col-12 col-lg-7">
+            <div class="tech-card h-100 mb-0">
+                <div class="tech-card-header">
+                    <h5 class="tech-card-title">Impresión y Tickets Térmicos</h5>
+                    <a asp-action="ImpresionPrueba" target="_blank" class="small text-primary fw-semibold text-decoration-none">Abrir Ticket de Prueba →</a>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-12 col-md-8">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Impresora Configurada</label>
+                        <input type="text" name="ImpresoraConfigurada" value="@Model.ImpresoraConfigurada" class="form-control" required />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Ancho de Papel</label>
+                        <select name="AnchoPapelMm" class="form-select">
+                            <option value="80" selected="@(Model.AnchoPapelMm == 80)">80 mm (Estándar)</option>
+                            <option value="58" selected="@(Model.AnchoPapelMm == 58)">58 mm (Compacto)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Nombre Comercial en Ticket</label>
+                        <input type="text" name="NombreComercialTicket" value="@Model.NombreComercialTicket" class="form-control" required />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Teléfono en Ticket</label>
+                        <input type="text" name="TelefonoTicket" value="@Model.TelefonoTicket" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small text-muted text-uppercase fw-semibold">Dirección en Ticket</label>
+                    <input type="text" name="DireccionTicket" value="@Model.DireccionTicket" class="form-control" />
+                </div>
+
+                <div class="mb-0">
+                    <label class="form-label small text-muted text-uppercase fw-semibold">Mensaje al Pie del Ticket</label>
+                    <input type="text" name="MensajePieTicket" value="@Model.MensajePieTicket" class="form-control" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración Regional + Resumen Respaldos -->
+        <div class="col-12 col-lg-5 d-flex flex-column gap-3">
+            <div class="tech-card mb-0">
+                <div class="tech-card-header">
+                    <h5 class="tech-card-title">Configuración Regional</h5>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Moneda</label>
+                        <select name="Moneda" class="form-select">
+                            <option value="DOP" selected="@(Model.Moneda == "DOP")">DOP (RD$)</option>
+                            <option value="USD" selected="@(Model.Moneda == "USD")">USD ($)</option>
+                            <option value="EUR" selected="@(Model.Moneda == "EUR")">EUR (€)</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Formato de Fecha</label>
+                        <select name="FormatoFecha" class="form-select">
+                            <option value="dd/MM/yyyy" selected="@(Model.FormatoFecha == "dd/MM/yyyy")">dd/MM/yyyy</option>
+                            <option value="yyyy-MM-dd" selected="@(Model.FormatoFecha == "yyyy-MM-dd")">yyyy-MM-dd</option>
+                            <option value="MM/dd/yyyy" selected="@(Model.FormatoFecha == "MM/dd/yyyy")">MM/dd/yyyy</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-7">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Zona Horaria</label>
+                        <input type="text" name="ZonaHoraria" value="@Model.ZonaHoraria" class="form-control font-monospace" required />
+                    </div>
+                    <div class="col-5">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Cultura</label>
+                        <input type="text" name="CulturaRegional" value="@Model.CulturaRegional" class="form-control font-monospace" required />
+                    </div>
+                </div>
+            </div>
+
+            <div class="tech-card mb-0">
+                <div class="tech-card-header">
+                    <h5 class="tech-card-title">Resumen de Respaldos</h5>
+                    <a asp-action="BaseDatos" class="small text-primary fw-semibold text-decoration-none">Editar →</a>
+                </div>
+                <div class="small text-muted mb-1">Directorio: <span class="tech-code">@Model.CarpetaRespaldos</span></div>
+                <div class="small text-muted mb-1">Frecuencia automática: <strong class="text-dark">@Model.FrecuenciaRespaldos</strong></div>
+                <div class="small text-muted">Retención: @Model.PoliticaRetencionResumen</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-tech px-4">
+            Guardar Configuración Técnica
+        </button>
+    </div>
+</form>

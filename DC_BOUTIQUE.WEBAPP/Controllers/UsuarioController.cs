@@ -19,7 +19,14 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
         public async Task<IActionResult> Index()
         {
             var dtos = await _usuarioService.GetAllAsync();
-            var viewModels = dtos.Select(d => d.ToViewModel()).ToList();
+            // Ocultar la cuenta técnica Desarrollador del listado operativo de empleados de la boutique
+            var viewModels = dtos
+                .Where(d => d.Rol != Core.Domain.Common.Enums.RolUsuario.Desarrollador)
+                .OrderByDescending(d => d.EsPrincipal)
+                .ThenBy(d => d.Rol)
+                .ThenBy(d => d.NombreCompleto)
+                .Select(d => d.ToViewModel())
+                .ToList();
             return View(viewModels);
         }
 
@@ -33,6 +40,12 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(SaveUsuarioViewModel model)
         {
+            if (model.Rol == Core.Domain.Common.Enums.RolUsuario.Desarrollador)
+            {
+                TempData["ErrorMessage"] = "No está permitido asignar el rol Desarrollador desde este módulo.";
+                return RedirectToAction(nameof(Index));
+            }
+
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values
@@ -60,9 +73,9 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
         public async Task<IActionResult> Edit(Guid id)
         {
             var dto = await _usuarioService.GetByIdAsync(id);
-            if (dto == null)
+            if (dto == null || dto.Rol == Core.Domain.Common.Enums.RolUsuario.Desarrollador)
             {
-                TempData["ErrorMessage"] = "El usuario seleccionado no existe o fue eliminado.";
+                TempData["ErrorMessage"] = "El usuario seleccionado no existe o está protegido.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -74,6 +87,12 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, SaveUsuarioViewModel model)
         {
+            if (model.Rol == Core.Domain.Common.Enums.RolUsuario.Desarrollador)
+            {
+                TempData["ErrorMessage"] = "No está permitido asignar el rol Desarrollador desde este módulo.";
+                return RedirectToAction(nameof(Index));
+            }
+
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values

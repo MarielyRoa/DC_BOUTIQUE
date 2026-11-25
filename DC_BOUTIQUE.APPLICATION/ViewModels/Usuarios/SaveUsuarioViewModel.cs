@@ -24,6 +24,7 @@ namespace DC_BOUTIQUE.Core.Application.ViewModels.Usuarios
         public string? Telefono { get; set; }
 
         public RolUsuario Rol { get; set; } = RolUsuario.Vendedor;
+        public bool EsPrincipal { get; set; } = false;
 
         [Range(0, 100, ErrorMessage = "El porcentaje debe estar entre 0 y 100.")]
         public decimal PorcentajeComision { get; set; } = 0m;

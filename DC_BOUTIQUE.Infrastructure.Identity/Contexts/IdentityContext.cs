@@ -15,11 +15,6 @@ namespace DC_BOUTIQUE.Infrastructure.Identity.Contexts
         {
             base.OnModelCreating(builder);
 
-            if (Database.IsSqlServer())
-            {
-                builder.HasDefaultSchema("Identity");
-            }
-
             builder.Entity<AppUser>(entity =>
             {
                 entity.ToTable(name: "Users");

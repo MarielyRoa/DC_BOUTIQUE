@@ -9,11 +9,16 @@ namespace DC_BOUTIQUE.Infrastructure.Identity.Services
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AccountServiceWebApp(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+        public AccountServiceWebApp(
+            UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager,
+            RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleManager = roleManager;
         }
 
         public async Task<AuthenticationResponse> AuthenticateAsync(AuthenticationRequest request)
@@ -90,11 +95,122 @@ namespace DC_BOUTIQUE.Infrastructure.Identity.Services
                 return response;
             }
 
-            string roleToAssign = string.IsNullOrWhiteSpace(request.Role) ? "Vendedor" : request.Role;
+            string roleToAssign = string.IsNullOrWhiteSpace(request.Role) ? "Cajero" : request.Role.Trim();
+
+            // Normalizar alias de dominio ("Vendedor") al rol oficial de Identity ("Cajero")
+            if (roleToAssign.Equals("Vendedor", StringComparison.OrdinalIgnoreCase))
+            {
+                roleToAssign = "Cajero";
+            }
+
+            // Seguridad: nunca permitir asignar el rol Desarrollador desde el flujo ordinario de usuarios de boutique
+            if (roleToAssign.Equals("Desarrollador", StringComparison.OrdinalIgnoreCase))
+            {
+                response.HasError = true;
+                response.Error = "No está permitido asignar el rol Desarrollador desde la gestión de usuarios.";
+                return response;
+            }
+
             await _userManager.AddToRoleAsync(user, roleToAssign);
 
             response.HasError = false;
             return response;
+        }
+
+        public async Task<RegisterResponse> RegisterDeveloperInitialAsync(RegisterRequest request)
+        {
+            var response = new RegisterResponse();
+
+            if (!await _roleManager.RoleExistsAsync("Desarrollador"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Desarrollador"));
+            }
+
+            var existingDevs = await _userManager.GetUsersInRoleAsync("Desarrollador");
+            if (existingDevs.Any())
+            {
+                response.HasError = true;
+                response.Error = "Ya existe una cuenta con rol Desarrollador configurada en Identity.";
+                return response;
+            }
+
+            var userWithSameUserName = await _userManager.FindByNameAsync(request.UserName.Trim());
+            if (userWithSameUserName != null)
+            {
+                response.HasError = true;
+                response.Error = $"El nombre de usuario '{request.UserName}' ya está en uso.";
+                return response;
+            }
+
+            var user = new AppUser
+            {
+                UserName = request.UserName.Trim(),
+                FirstName = request.FirstName.Trim(),
+                LastName = request.LastName.Trim(),
+                PhoneNumber = request.PhoneNumber,
+                Cedula = request.Cedula,
+                IsActive = true
+            };
+
+            var result = await _userManager.CreateAsync(user, request.Password);
+            if (!result.Succeeded)
+            {
+                response.HasError = true;
+                response.Error = string.Join(", ", result.Errors.Select(e => e.Description));
+                return response;
+            }
+
+            await _userManager.AddToRoleAsync(user, "Desarrollador");
+
+            response.HasError = false;
+            return response;
+        }
+
+        public Task<Dictionary<string, string?>> GetUserEmailsByUserNameAsync()
+        {
+            var map = _userManager.Users
+                .Where(u => u.UserName != null)
+                .ToList()
+                .GroupBy(u => u.UserName!.ToLowerInvariant())
+                .ToDictionary(g => g.Key, g => g.First().Email);
+
+            return Task.FromResult(map);
+        }
+
+        public async Task<(bool Success, string Message)> ResetPasswordByTechAdminAsync(string userName, string newPassword)
+        {
+            var user = await _userManager.FindByNameAsync(userName.Trim());
+            if (user == null)
+            {
+                return (true, "Usuario no presente en Identity; actualizado en dominio.");
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var res = await _userManager.ResetPasswordAsync(user, token, newPassword);
+            if (!res.Succeeded)
+            {
+                return (false, string.Join("; ", res.Errors.Select(e => e.Description)));
+            }
+
+            return (true, "Contraseña actualizada en ASP.NET Core Identity.");
+        }
+
+        public async Task<(bool Success, string Message)> SetActiveStateByTechAdminAsync(string userName, bool isActive)
+        {
+            var user = await _userManager.FindByNameAsync(userName.Trim());
+            if (user == null)
+            {
+                return (true, "Usuario sincronizado en dominio.");
+            }
+
+            user.IsActive = isActive;
+            var res = await _userManager.UpdateAsync(user);
+            if (!res.Succeeded)
+            {
+                return (false, string.Join("; ", res.Errors.Select(e => e.Description)));
+            }
+
+            return (true, "Estado sincronizado en ASP.NET Core Identity.");
         }
     }
 }

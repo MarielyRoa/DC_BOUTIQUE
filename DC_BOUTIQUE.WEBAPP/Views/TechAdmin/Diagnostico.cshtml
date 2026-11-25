@@ -1,0 +1,122 @@
+@model DC_BOUTIQUE.Core.Application.DTOs.TechAdmin.TechDiagnosticsViewDto
+@{
+    Layout = "_TechLayout";
+    ViewData["Title"] = "Diagnóstico del Sistema";
+    string Badge(string est) => est switch
+    {
+        "Correcto" => "tech-badge-ok",
+        "Advertencia" => "tech-badge-warn",
+        _ => "tech-badge-err"
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark">Diagnóstico Integral del Sistema</h4>
+        <div class="text-muted small">
+            9 comprobaciones en vivo sin reparaciones destructivas automáticas · Ejecutado: @Model.FechaEjecucionLocal.ToString("dd/MM/yyyy HH:mm:ss")
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="@Badge(Model.EstadoGeneral)">Estado General: @Model.EstadoGeneral</span>
+        <form asp-action="ReejecutarDiagnostico" method="post" class="d-inline" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Comprobando...';">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-tech-outline btn-sm">Volver a Comprobar</button>
+        </form>
+        <a asp-action="ExportarPaqueteDiagnostico" class="btn btn-tech btn-sm">Exportar Paquete Diagnóstico (.zip)</a>
+    </div>
+</div>
+
+<!-- Resumen de Contadores -->
+<div class="row g-3 mb-3">
+    <div class="col-12 col-sm-4">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Comprobaciones Correctas</div>
+            <div class="tech-kpi-value text-success">@Model.TotalCorrectas / @Model.Comprobaciones.Count</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-4">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Advertencias</div>
+            <div class="tech-kpi-value text-warning">@Model.TotalAdvertencias</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-4">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Errores Críticos</div>
+            <div class="tech-kpi-value text-danger">@Model.TotalErrores</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla Detallada de las 9 Comprobaciones -->
+<div class="tech-card">
+    <div class="tech-card-header">
+        <h5 class="tech-card-title">Resultados y Recomendaciones Técnicas</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="tech-table">
+            <thead>
+                <tr>
+                    <th>Comprobación</th>
+                    <th>Estado</th>
+                    <th>Resultado</th>
+                    <th>Descripción del Problema</th>
+                    <th>Recomendación</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Comprobaciones)
+                {
+                    <tr>
+                        <td class="fw-semibold text-dark">@c.Nombre</td>
+                        <td><span class="@Badge(c.Estado)">@c.Estado</span></td>
+                        <td class="small text-dark">@c.Resultado</td>
+                        <td class="small text-muted">@c.DescripcionProblema</td>
+                        <td class="small @(c.Estado == "Correcto" ? "text-muted" : "text-primary fw-semibold")">@c.Recomendacion</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Información del Entorno Windows y .NET -->
+<div class="tech-card">
+    <div class="tech-card-header">
+        <h5 class="tech-card-title">Información del Equipo Windows y Entorno .NET</h5>
+        <span class="tech-badge-info">@Model.Entorno.DotNetVersion</span>
+    </div>
+    <div class="row g-3">
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="small text-muted">Equipo Windows</div>
+            <div class="fw-bold text-dark">@Model.Entorno.MachineName</div>
+            <div class="small text-muted">SO Arch: @Model.Entorno.OsArchitecture</div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="small text-muted">Sistema Operativo</div>
+            <div class="small fw-semibold text-dark">@Model.Entorno.OsDescription</div>
+            <div class="small text-muted">Proceso: @Model.Entorno.ProcessArchitecture</div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="small text-muted">Memoria y CPU</div>
+            <div class="fw-bold text-dark">@Model.Entorno.WorkingSetMb MB RAM</div>
+            <div class="small text-muted">Procesadores: @Model.Entorno.ProcessorCount</div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="small text-muted">Zona Horaria</div>
+            <div class="small fw-semibold text-dark">@Model.Entorno.TimeZoneName</div>
+            <div class="small text-muted">@Model.Entorno.ServerLocalTime.ToString("dd/MM/yyyy HH:mm:ss")</div>
+        </div>
+    </div>
+    <div class="row g-2 mt-3 pt-3 border-top">
+        <div class="col-12 col-lg-6">
+            <div class="small text-muted mb-1">Carpeta de Instalación</div>
+            <div class="tech-code d-block py-1 px-2">@Model.Entorno.BaseDirectory</div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="small text-muted mb-1">Carpeta Persistente de Datos (ProgramData)</div>
+            <div class="tech-code d-block py-1 px-2">@Model.Entorno.ProgramDataDirectory</div>
+        </div>
+    </div>
+</div>

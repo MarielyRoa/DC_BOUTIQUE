@@ -1,0 +1,396 @@
+@inject DC_BOUTIQUE.WEBAPP.Middlewares.ValidateUserSession UserSession
+@{
+    var activeUser = UserSession.GetUser();
+    var techName = activeUser?.NombreCompleto ?? "Desarrolladora";
+    var techUsername = activeUser?.NombreUsuario ?? "desarrollador";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Centro del Desarrollador</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <style>
+        :root {
+            --tech-bg: #f8fafc;
+            --tech-sidebar: #ffffff;
+            --tech-surface: #ffffff;
+            --tech-surface-2: #f1f5f9;
+            --tech-border: #e2e8f0;
+            --tech-border-soft: #cbd5e1;
+            --tech-text: #0f172a;
+            --tech-muted: #64748b;
+            --tech-accent: #4f46e5;
+            --tech-accent-strong: #4338ca;
+            --tech-accent-bg: #eef2ff;
+            --tech-sky: #0284c7;
+            --tech-sidebar-w: 252px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--tech-bg);
+            color: var(--tech-text);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 13.5px;
+            margin: 0;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .tech-topbar {
+            height: 56px;
+            background: #ffffff;
+            border-bottom: 1px solid var(--tech-border);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            gap: 12px;
+        }
+
+        .tech-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--tech-text);
+            white-space: nowrap;
+        }
+
+        .tech-brand-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, #4f46e5, #0284c7);
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+        }
+
+        .tech-brand-title { font-weight: 700; font-size: 14.5px; line-height: 1.15; color: var(--tech-text); }
+        .tech-brand-sub { font-size: 11px; color: var(--tech-accent); font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; }
+
+        .tech-topbar-right { display: flex; align-items: center; gap: 9px; flex-wrap: nowrap; }
+
+        .tech-pill {
+            background: var(--tech-surface-2);
+            border: 1px solid var(--tech-border);
+            border-radius: 999px;
+            padding: 5px 12px;
+            font-size: 12px;
+            color: #334155;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+        }
+
+        .tech-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            display: inline-block;
+        }
+
+        .tech-sidebar {
+            width: var(--tech-sidebar-w);
+            background: var(--tech-sidebar);
+            border-right: 1px solid var(--tech-border);
+            position: fixed;
+            top: 56px;
+            bottom: 0;
+            left: 0;
+            padding: 14px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-y: auto;
+            z-index: 1020;
+        }
+
+        .tech-nav-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--tech-muted);
+            padding: 10px 10px 4px;
+        }
+
+        .tech-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 11px;
+            border-radius: 8px;
+            color: #334155;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            margin-bottom: 2px;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .tech-nav-link:hover { background: #f1f5f9; color: var(--tech-accent); }
+
+        .tech-nav-link.active {
+            background: var(--tech-accent-bg);
+            color: var(--tech-accent-strong);
+            font-weight: 700;
+            border-left: 3px solid var(--tech-accent);
+        }
+
+        .tech-nav-link i { font-size: 16px; color: var(--tech-accent); flex-shrink: 0; }
+
+        .tech-switch-btn {
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            color: #ffffff !important;
+            font-weight: 700;
+            border-radius: 10px;
+            padding: 9px 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 3px 10px rgba(2, 132, 199, 0.22);
+        }
+        .tech-switch-btn:hover { background: linear-gradient(135deg, #0369a1, #0284c7); color: #ffffff !important; }
+        .tech-switch-btn i { color: #ffffff !important; }
+
+        .tech-main {
+            margin-left: var(--tech-sidebar-w);
+            margin-top: 56px;
+            padding: 20px 26px 36px;
+            min-height: calc(100vh - 56px);
+        }
+
+        .tech-card {
+            background: var(--tech-surface);
+            border: 1px solid var(--tech-border);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            padding: 18px 20px;
+            margin-bottom: 18px;
+        }
+
+        .tech-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--tech-border);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .tech-card-title { font-size: 15px; font-weight: 700; color: var(--tech-text); margin: 0; }
+
+        .tech-kpi {
+            background: var(--tech-surface);
+            border: 1px solid var(--tech-border);
+            border-radius: 11px;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+            padding: 15px 17px;
+            height: 100%;
+        }
+
+        .tech-kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--tech-muted); margin-bottom: 6px; }
+        .tech-kpi-value { font-size: 20px; font-weight: 700; color: var(--tech-text); line-height: 1.2; }
+        .tech-kpi-sub { font-size: 12px; color: var(--tech-muted); margin-top: 5px; }
+
+        .tech-table { width: 100%; border-collapse: collapse; color: var(--tech-text); }
+        .tech-table th {
+            background: var(--tech-surface-2);
+            color: #475569;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 9px 12px;
+            border-bottom: 1px solid var(--tech-border);
+            text-align: left;
+        }
+        .tech-table td { padding: 10px 12px; border-bottom: 1px solid var(--tech-border); vertical-align: middle; font-size: 13px; color: #1e293b; }
+        .tech-table tr:hover td { background: #f8fafc; }
+
+        .tech-badge-ok { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; display: inline-block; }
+        .tech-badge-warn { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; display: inline-block; }
+        .tech-badge-err { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; display: inline-block; }
+        .tech-badge-info { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; display: inline-block; }
+
+        .form-control, .form-select { background-color: #ffffff; border-color: var(--tech-border-soft); color: var(--tech-text); font-size: 13px; }
+        .form-control:focus, .form-select:focus { border-color: var(--tech-accent); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14); }
+
+        .btn-tech {
+            background: linear-gradient(135deg, #4f46e5, #0284c7);
+            border: none;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 13px;
+            border-radius: 8px;
+            padding: 7px 14px;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+        }
+        .btn-tech:hover { background: linear-gradient(135deg, #4338ca, #0369a1); color: #ffffff; }
+
+        .btn-tech-outline {
+            background: #ffffff;
+            border: 1px solid var(--tech-border-soft);
+            color: #334155;
+            font-weight: 600;
+            font-size: 13px;
+            border-radius: 8px;
+            padding: 7px 14px;
+        }
+        .btn-tech-outline:hover { background: #f1f5f9; border-color: #94a3b8; color: var(--tech-text); }
+
+        .tech-code {
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 12px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 2px 7px;
+            border-radius: 5px;
+            color: #0369a1;
+            word-break: break-all;
+        }
+
+        .tech-subpanel { background: #f8fafc; border: 1px solid var(--tech-border); border-radius: 10px; padding: 14px; }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <header class="tech-topbar">
+        <a asp-controller="TechAdmin" asp-action="Index" class="tech-brand">
+            <div class="tech-brand-badge">DEV</div>
+            <div>
+                <div class="tech-brand-title">Centro del Desarrollador</div>
+                <div class="tech-brand-sub">DC_BOUTIQUE · Administración Técnica Local</div>
+            </div>
+        </a>
+
+        <div class="tech-topbar-right">
+            <a asp-controller="Admin" asp-action="Index" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                <i class="bi bi-shop me-1"></i> Panel del Administrador
+            </a>
+            <a asp-controller="Pos" asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">
+                <i class="bi bi-cart4 me-1"></i> POS [F1]
+            </a>
+            <span class="tech-pill">
+                <span class="tech-dot"></span>
+                <span>SQLite Local</span>
+            </span>
+            <span class="tech-pill">
+                <i class="bi bi-person-badge text-primary"></i>
+                <span>@techName</span>
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">@techUsername</span>
+            </span>
+            <a asp-controller="Auth" asp-action="Logout" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold">
+                Cerrar Sesión
+            </a>
+        </div>
+    </header>
+
+    <aside class="tech-sidebar">
+        <div>
+            <!-- Cambio Rápido al Espacio Comercial sin Cerrar Sesión -->
+            <a asp-controller="Admin" asp-action="Index" class="tech-nav-link tech-switch-btn">
+                <i class="bi bi-shop-window"></i>
+                <span>Ir al Panel Comercial</span>
+            </a>
+
+            <!-- 7 SECCIONES OFICIALES DEL CENTRO DEL DESARROLLADOR -->
+            <div class="tech-nav-label" style="color: var(--tech-accent);">Centro del Desarrollador</div>
+            <a asp-controller="TechAdmin" asp-action="Index" class="tech-nav-link @(currentAction == "Index" ? "active" : "")">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard Técnico</span>
+            </a>
+            <a asp-controller="TechAdmin" asp-action="BaseDatos" class="tech-nav-link @(currentAction == "BaseDatos" ? "active" : "")">
+                <i class="bi bi-database-check"></i>
+                <span>Base de Datos y Respaldos</span>
+            </a>
+            <a asp-controller="TechAdmin" asp-action="Usuarios" class="tech-nav-link @(currentAction == "Usuarios" ? "active" : "")">
+                <i class="bi bi-people-fill"></i>
+                <span>Usuarios y Accesos</span>
+            </a>
+            <a asp-controller="TechAdmin" asp-action="Configuracion" class="tech-nav-link @(currentAction == "Configuracion" ? "active" : "")">
+                <i class="bi bi-sliders"></i>
+                <span>Configuración Técnica</span>
+            </a>
+            <a asp-controller="TechAdmin" asp-action="Logs" class="tech-nav-link @(currentAction == "Logs" ? "active" : "")">
+                <i class="bi bi-journal-code"></i>
+                <span>Logs y Errores</span>
+            </a>
+            <a asp-controller="TechAdmin" asp-action="Diagnostico" class="tech-nav-link @(currentAction == "Diagnostico" ? "active" : "")">
+                <i class="bi bi-heart-pulse"></i>
+                <span>Diagnóstico del Sistema</span>
+            </a>
+            <a asp-controller="TechAdmin" asp-action="Mantenimiento" class="tech-nav-link @(currentAction == "Mantenimiento" ? "active" : "")">
+                <i class="bi bi-wrench-adjustable"></i>
+                <span>Historial de Mantenimiento</span>
+            </a>
+
+            <div class="tech-nav-label mt-2">Accesos Comerciales Rápidos</div>
+            <a asp-controller="Pos" asp-action="Index" class="tech-nav-link">
+                <i class="bi bi-cart4 text-info"></i>
+                <span>Punto de Venta (POS)</span>
+            </a>
+            <a asp-controller="Caja" asp-action="Index" class="tech-nav-link">
+                <i class="bi bi-cash-stack text-info"></i>
+                <span>Caja & Turnos</span>
+            </a>
+            <a asp-controller="Producto" asp-action="Index" class="tech-nav-link">
+                <i class="bi bi-tag text-info"></i>
+                <span>Ropa & Accesorios</span>
+            </a>
+            <a asp-controller="Pos" asp-action="Ventas" class="tech-nav-link">
+                <i class="bi bi-receipt text-info"></i>
+                <span>Historial de Ventas</span>
+            </a>
+        </div>
+
+        <div class="pt-3 mt-3 border-top text-center text-muted" style="font-size: 11.5px;">
+            <div class="fw-bold text-secondary">DC_BOUTIQUE · Modo Local</div>
+            <div>Sin internet · SQLite + Inno Setup 6</div>
+        </div>
+    </aside>
+
+    <main class="tech-main">
+        @if (TempData["TechSuccess"] != null)
+        {
+            <div class="alert alert-success d-flex justify-content-between align-items-center py-2 px-3 mb-3">
+                <span>@TempData["TechSuccess"]</span>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["TechError"] != null)
+        {
+            <div class="alert alert-danger d-flex justify-content-between align-items-center py-2 px-3 mb-3">
+                <span>@TempData["TechError"]</span>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @RenderBody()
+    </main>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

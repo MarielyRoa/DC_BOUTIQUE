@@ -11,6 +11,10 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
         public IActionResult Index()
         {
             var role = HttpContext.Session.GetString("UserRole");
+            if (string.Equals(role, "Desarrollador", StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "TechAdmin");
+            }
             if (string.Equals(role, "Vendedor", StringComparison.OrdinalIgnoreCase))
             {
                 return RedirectToAction("Index", "Pos");

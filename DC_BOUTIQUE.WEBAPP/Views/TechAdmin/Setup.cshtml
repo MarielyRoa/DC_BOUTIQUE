@@ -1,0 +1,159 @@
+@model DC_BOUTIQUE.Core.Application.ViewModels.TechAdmin.SetupDesarrolladorViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Configuración Inicial — Centro de Administración Técnica";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            background: #0b1120;
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .tech-setup-card {
+            width: 100%;
+            max-width: 480px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 14px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+            overflow: hidden;
+        }
+        .tech-setup-header {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            border-bottom: 1px solid #1f2937;
+            padding: 22px 26px;
+        }
+        .tech-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            padding: 3px 10px;
+            border-radius: 999px;
+            margin-bottom: 10px;
+        }
+        .tech-setup-body {
+            padding: 24px 26px;
+        }
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+        }
+        .form-control {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+        .form-control:focus {
+            background: #0f172a;
+            border-color: #38bdf8;
+            color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+        .btn-tech-primary {
+            background: #0284c7;
+            border: none;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 11px 16px;
+            border-radius: 8px;
+            width: 100%;
+        }
+        .btn-tech-primary:hover {
+            background: #0369a1;
+            color: #ffffff;
+        }
+        .tech-notice {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            color: #fcd34d;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 12.5px;
+            margin-bottom: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="tech-setup-card">
+        <div class="tech-setup-header">
+            <span class="tech-badge">DC_BOUTIQUE · Instalación Local</span>
+            <h4 class="mb-1 fw-bold text-white">Centro de Administración Técnica</h4>
+            <p class="mb-0 small text-secondary">Configuración inicial única de la cuenta Desarrollador</p>
+        </div>
+
+        <div class="tech-setup-body">
+            <div class="tech-notice">
+                Esta pantalla solo está disponible de forma local antes de registrar la cuenta técnica. Una vez creada, esta ruta se deshabilitará permanentemente.
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger py-2 px-3 small">
+                    @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <div>@err.ErrorMessage</div>
+                    }
+                </div>
+            }
+
+            <form asp-action="Setup" asp-controller="TechAdmin" method="post" novalidate>
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label asp-for="NombreCompleto" class="form-label">Nombre de la Desarrolladora</label>
+                    <input asp-for="NombreCompleto" class="form-control" autocomplete="name" placeholder="Ej. Mariela Corporan" autofocus />
+                    <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="NombreUsuario" class="form-label">Usuario Técnico (Login)</label>
+                    <input asp-for="NombreUsuario" class="form-control font-monospace" autocomplete="username" placeholder="Ej. dev.soporte" />
+                    <span asp-validation-for="NombreUsuario" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">Contraseña Técnica (mín. 8 caracteres)</label>
+                    <input asp-for="Password" type="password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="ConfirmPassword" class="form-label">Confirmar Contraseña</label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-tech-primary">
+                    Registrar Cuenta Técnica y Bloquear Setup
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

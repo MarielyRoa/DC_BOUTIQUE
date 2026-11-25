@@ -1,0 +1,202 @@
+@model DC_BOUTIQUE.Core.Application.DTOs.TechAdmin.TechDashboardDto
+@using DC_BOUTIQUE.Core.Application.Services
+@{
+    Layout = "_TechLayout";
+    ViewData["Title"] = "Dashboard Técnico";
+    string EstadoBadge(string estado) => estado switch
+    {
+        "Correcto" => "tech-badge-ok",
+        "Advertencia" => "tech-badge-warn",
+        _ => "tech-badge-err"
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark">Dashboard Técnico — @Model.NombreSistema</h4>
+        <div class="text-muted small">
+            Instalación local Windows · Versión <span class="text-primary fw-semibold">v@(Model.VersionInstalada)</span> · Aplicación: <strong class="text-success">@Model.EstadoAplicacion</strong>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="@EstadoBadge(Model.EstadoGeneral)">Estado General: @Model.EstadoGeneral</span>
+        <a asp-action="Diagnostico" class="btn btn-tech-outline btn-sm">Ejecutar Diagnóstico</a>
+        <a asp-action="Index" class="btn btn-tech btn-sm">Actualizar</a>
+    </div>
+</div>
+
+<!-- Fila 1: SQLite, Tamaño BD, Disco, Respaldos -->
+<div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="tech-kpi-label mb-0">Conexión SQLite</span>
+                <span class="@(Model.SqliteConectada ? "tech-badge-ok" : "tech-badge-err")">@(Model.SqliteConectada ? "Correcto" : "Error")</span>
+            </div>
+            <div class="tech-kpi-value">v@(Model.SqliteVersion)</div>
+            <div class="tech-kpi-sub">Modo @Model.JournalMode · FK @(Model.ForeignKeysEnabled ? "ON" : "OFF")</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Tamaño Base de Datos</div>
+            <div class="tech-kpi-value">@TechAdminService.FormatBytes(Model.TamanoBaseDatosBytes)</div>
+            <div class="tech-kpi-sub">WAL activo: @TechAdminService.FormatBytes(Model.TamanoWalBytes)</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Espacio Disponible (@Model.UnidadDisco)</div>
+            <div class="tech-kpi-value">@TechAdminService.FormatBytes(Model.EspacioLibreBytes)</div>
+            <div class="tech-kpi-sub">Uso: @Model.PorcentajeUsoDisco% de @TechAdminService.FormatBytes(Model.EspacioTotalBytes)</div>
+            <div class="progress mt-2" style="height: 6px; background: #e2e8f0;">
+                <div class="progress-bar @(Model.PorcentajeUsoDisco > 85 ? "bg-danger" : (Model.PorcentajeUsoDisco > 70 ? "bg-warning" : "bg-primary"))"
+                     style="width: @Model.PorcentajeUsoDisco.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="tech-kpi-label mb-0">Respaldos Disponibles</span>
+                <span class="@(Model.TotalRespaldosDisponibles > 0 ? "tech-badge-ok" : "tech-badge-warn")">@Model.TotalRespaldosDisponibles</span>
+            </div>
+            <div class="tech-kpi-value" style="font-size: 16px;">
+                @(Model.FechaUltimoRespaldoExitoso.HasValue ? Model.FechaUltimoRespaldoExitoso.Value.ToString("dd/MM/yyyy HH:mm") : "Sin respaldos")
+            </div>
+            <div class="tech-kpi-sub">
+                Próximo: @(Model.ProximoRespaldoProgramado.HasValue ? Model.ProximoRespaldoProgramado.Value.ToString("dd/MM HH:mm") : "Desactivado")
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fila 2: Conteos Reales (Usuarios, Productos y Variantes, Esquema, Errores 24h) -->
+<div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Usuarios Registrados</div>
+            <div class="tech-kpi-value">@Model.TotalUsuariosRegistrados</div>
+            <div class="tech-kpi-sub d-flex justify-content-between">
+                <span>@Model.UsuariosActivos activos</span>
+                <a asp-action="Usuarios" class="text-primary fw-semibold text-decoration-none">Gestionar →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Productos y Variantes</div>
+            <div class="tech-kpi-value">@Model.TotalProductos <span class="fs-6 text-muted fw-normal">/ @Model.TotalVariantes var.</span></div>
+            <div class="tech-kpi-sub">Catálogo activo en SQLite</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Respaldos Automáticos</div>
+            <div class="mt-1">
+                <span class="@(Model.RespaldosAutomaticosActivos ? "tech-badge-ok" : "tech-badge-warn")">
+                    @(Model.RespaldosAutomaticosActivos ? Model.FrecuenciaRespaldosTexto : "Desactivados")
+                </span>
+            </div>
+            <div class="tech-kpi-sub d-flex justify-content-between mt-2">
+                <span>Servicio local activo</span>
+                <a asp-action="BaseDatos" class="text-primary fw-semibold text-decoration-none">Configurar →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Incidencias (24h)</div>
+            <div class="d-flex align-items-center gap-3 mt-1">
+                <div>
+                    <span class="fw-bold fs-5 @(Model.ErroresUltimas24Horas > 0 ? "text-danger" : "text-success")">@Model.ErroresUltimas24Horas</span>
+                    <span class="text-muted small ms-1">Errores</span>
+                </div>
+                <div class="vr opacity-25"></div>
+                <div>
+                    <span class="fw-bold fs-5 @(Model.FallosAuthUltimas24Horas > 3 ? "text-warning" : "text-dark")">@Model.FallosAuthUltimas24Horas</span>
+                    <span class="text-muted small ms-1">Auth</span>
+                </div>
+            </div>
+            <div class="tech-kpi-sub"><a asp-action="Logs" class="text-primary fw-semibold text-decoration-none">Ver visor de logs →</a></div>
+        </div>
+    </div>
+</div>
+
+<!-- Estado de Componentes Principales -->
+<div class="tech-card">
+    <div class="tech-card-header">
+        <h5 class="tech-card-title">Estado Real de la Instalación</h5>
+        <span class="tech-code">@Model.RutaBaseDatos</span>
+    </div>
+    <div class="table-responsive">
+        <table class="tech-table">
+            <thead>
+                <tr>
+                    <th>Componente</th>
+                    <th>Estado</th>
+                    <th>Detalle Técnico</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var svc in Model.ServiciosPrincipales)
+                {
+                    <tr>
+                        <td class="fw-semibold text-dark">@svc.Nombre</td>
+                        <td><span class="@EstadoBadge(svc.Estado)">@svc.Estado</span></td>
+                        <td class="text-muted">@svc.Detalle</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Últimos Errores Registrados -->
+<div class="tech-card">
+    <div class="tech-card-header">
+        <h5 class="tech-card-title">Últimos Errores y Advertencias Registradas</h5>
+        <a asp-action="Logs" class="btn btn-tech-outline btn-sm">Ir a Logs y Errores</a>
+    </div>
+    @if (Model.UltimosErrores.Any())
+    {
+        <div class="table-responsive">
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Categoría</th>
+                        <th>Severidad</th>
+                        <th>Origen</th>
+                        <th>Mensaje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var err in Model.UltimosErrores)
+                    {
+                        <tr>
+                            <td class="text-muted text-nowrap">@err.FechaEventoLocal.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td><span class="tech-code">@err.Tipo</span></td>
+                            <td><span class="@(err.Severidad == "Warning" ? "tech-badge-warn" : "tech-badge-err")">@err.Severidad</span></td>
+                            <td class="font-monospace small text-primary">@err.Origen</td>
+                            <td class="text-dark">@err.Mensaje</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex align-items-center gap-2 text-success small fw-semibold">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>No se registran errores recientes en el sistema.</span>
+        </div>
+    }
+</div>

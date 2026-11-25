@@ -1,5 +1,9 @@
 using System.Net;
 using System.Text.Json;
+using DC_BOUTIQUE.Core.Application.Interfaces;
+using DC_BOUTIQUE.Core.Domain.Common.Enums;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace DC_BOUTIQUE.WEBAPP.Middlewares
 {
@@ -23,7 +27,39 @@ namespace DC_BOUTIQUE.WEBAPP.Middlewares
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Excepción global interceptada por GlobalExceptionMiddleware: {Message}", ex.Message);
+                await TryPersistTechnicalLogAsync(context, ex);
                 await HandleExceptionAsync(context, ex);
+            }
+        }
+
+        private static async Task TryPersistTechnicalLogAsync(HttpContext context, Exception ex)
+        {
+            try
+            {
+                var techService = context.RequestServices.GetService<ITechAdminService>();
+                if (techService == null) return;
+
+                bool isPersistence = ex is DbUpdateException
+                    || ex is SqliteException
+                    || ex.InnerException is SqliteException
+                    || ex.GetType().Name.Contains("Sql", StringComparison.OrdinalIgnoreCase);
+
+                var tipo = isPersistence ? TipoLogTecnico.Persistencia : TipoLogTecnico.Excepcion;
+                var origen = $"{context.Request.Method} {context.Request.Path}";
+                var usuario = context.Session?.GetString("UserName");
+                var detail = $"{ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}";
+
+                await techService.LogEventAsync(
+                    tipo,
+                    isPersistence ? "Critical" : "Error",
+                    origen,
+                    ex.Message,
+                    detail,
+                    usuario);
+            }
+            catch
+            {
+                // Nunca fallar sobre la respuesta de error original
             }
         }
 

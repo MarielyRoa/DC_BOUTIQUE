@@ -30,6 +30,7 @@ namespace DC_BOUTIQUE.Core.Application.Extensions
                 Cedula = dto.Cedula,
                 Telefono = dto.Telefono,
                 Rol = dto.Rol,
+                EsPrincipal = dto.EsPrincipal,
                 PorcentajeComision = dto.PorcentajeComision,
                 Activo = dto.Activo,
                 FechaCreacion = dto.FechaCreacion
@@ -62,6 +63,7 @@ namespace DC_BOUTIQUE.Core.Application.Extensions
                 Cedula = dto.Cedula,
                 Telefono = dto.Telefono,
                 Rol = dto.Rol,
+                EsPrincipal = dto.EsPrincipal,
                 PorcentajeComision = dto.PorcentajeComision,
                 Activo = dto.Activo
             };

@@ -1,0 +1,375 @@
+@model DC_BOUTIQUE.Core.Application.DTOs.TechAdmin.TechDatabaseViewDto
+@using DC_BOUTIQUE.Core.Application.DTOs.TechAdmin
+@using DC_BOUTIQUE.Core.Application.Services
+@using DC_BOUTIQUE.Core.Domain.Common.Enums
+@{
+    Layout = "_TechLayout";
+    ViewData["Title"] = "Base de Datos y Respaldos";
+    var integrityReport = ViewBag.IntegrityReport as TechIntegrityResultDto;
+    var cfg = Model.ConfiguracionRespaldos;
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark">Base de Datos SQLite y Administración de Respaldos</h4>
+        <div class="text-muted small">Respaldos manuales consistentes (WAL), programación automática en segundo plano, retención inteligente y restauración segura</div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <form asp-action="VerificarIntegridad" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-tech-outline btn-sm">Verificar Integridad</button>
+        </form>
+        <form asp-action="AbrirCarpetaRespaldos" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-tech-outline btn-sm"><i class="bi bi-folder2-open me-1"></i> Abrir Carpeta en Windows</button>
+        </form>
+        <a asp-action="ExportarInfoTecnica" class="btn btn-tech-outline btn-sm">Exportar Info JSON</a>
+    </div>
+</div>
+
+@if (integrityReport != null)
+{
+    <div class="tech-card border @(integrityReport.IsValid ? "border-success" : "border-danger")">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+            <div class="fw-bold @(integrityReport.IsValid ? "text-success" : "text-danger")">
+                PRAGMA integrity_check: @(integrityReport.IsValid ? "BASE DE DATOS ÍNTEGRA (OK)" : "SE DETECTARON ERRORES")
+            </div>
+            <span class="text-muted small">@integrityReport.CheckedAtLocal.ToString("dd/MM/yyyy HH:mm:ss") · @integrityReport.DurationMs ms</span>
+        </div>
+        <div class="small text-dark font-monospace">
+            @foreach (var msg in integrityReport.Messages)
+            {
+                <div>• @msg</div>
+            }
+        </div>
+    </div>
+}
+
+<!-- KPIs de SQLite y Respaldo -->
+<div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Base de Datos SQLite</div>
+            <div class="tech-kpi-value">@TechAdminService.FormatBytes(Model.TamanoBaseDatosBytes)</div>
+            <div class="tech-kpi-sub">v@(Model.SqliteVersion) · @Model.JournalMode · WAL: @TechAdminService.FormatBytes(Model.TamanoWalBytes)</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Último Respaldo Exitoso</div>
+            <div class="tech-kpi-value" style="font-size: 16px;">
+                @(cfg.UltimoRespaldoExitosoLocal.HasValue ? cfg.UltimoRespaldoExitosoLocal.Value.ToString("dd/MM/yyyy HH:mm") : "Pendiente")
+            </div>
+            <div class="tech-kpi-sub text-truncate" title="@cfg.UltimoArchivoRespaldo">@(cfg.UltimoArchivoRespaldo ?? "Aún no registrado")</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Próximo Respaldo Programado</div>
+            <div class="tech-kpi-value" style="font-size: 16px;">
+                @(cfg.ProximoRespaldoProgramadoLocal.HasValue ? cfg.ProximoRespaldoProgramadoLocal.Value.ToString("dd/MM/yyyy HH:mm") : "Desactivado")
+            </div>
+            <div class="tech-kpi-sub">@(cfg.AutomaticosActivos ? TechAdminService.FormatFrequency(cfg.Frecuencia) : "Respaldos automáticos inactivos")</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="tech-kpi">
+            <div class="tech-kpi-label">Respaldos Almacenados</div>
+            <div class="tech-kpi-value">@Model.Respaldos.Count</div>
+            <div class="tech-kpi-sub">
+                @if (!string.IsNullOrWhiteSpace(cfg.UltimoErrorRespaldo))
+                {
+                    <span class="text-danger fw-semibold">Error reciente registrado</span>
+                }
+                else
+                {
+                    <span class="text-success fw-semibold">Sin errores de respaldo</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección Dual: Respaldo Manual Inmediato + Configuración Automática -->
+<div class="row g-3 mb-3">
+    <!-- 3.1 Respaldo Manual Inmediato -->
+    <div class="col-12 col-lg-5">
+        <div class="tech-card h-100 mb-0">
+            <div class="tech-card-header">
+                <h5 class="tech-card-title">Respaldo Manual Inmediato</h5>
+            </div>
+
+            <div class="mb-3">
+                <div class="small text-muted mb-1">Archivo SQLite Activo</div>
+                <div class="tech-code d-block py-1 px-2">@Model.RutaBaseDatos</div>
+            </div>
+
+            <form asp-action="CrearRespaldo" method="post" class="mb-3">
+                @Html.AntiForgeryToken()
+                <div class="mb-2">
+                    <label class="form-label small text-muted text-uppercase fw-semibold">Ubicación de destino (fuera de Program Files)</label>
+                    <input type="text" name="carpetaDestinoCustom" value="@Model.RutaRespaldos" class="form-control font-monospace" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted text-uppercase fw-semibold">Etiqueta opcional</label>
+                    <input type="text" name="nota" maxlength="20" class="form-control font-monospace" placeholder="Ej. MANUAL o CIERRE" />
+                </div>
+                <button type="submit" class="btn btn-tech w-100 mb-2">
+                    <i class="bi bi-cloud-arrow-down me-1"></i> Crear Respaldo Ahora (Consistente WAL)
+                </button>
+            </form>
+
+            <form asp-action="EjecutarRespaldoPrueba" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-tech-outline btn-sm w-100">
+                    Ejecutar Respaldo de Prueba
+                </button>
+            </form>
+
+            @if (!string.IsNullOrWhiteSpace(cfg.UltimoErrorRespaldo))
+            {
+                <div class="alert alert-danger small mt-3 mb-0 py-2">
+                    <strong>Último error de respaldo (@cfg.FechaUltimoErrorLocal?.ToString("dd/MM HH:mm")):</strong>
+                    <div>@cfg.UltimoErrorRespaldo</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 3.2 Respaldos Automáticos Configurables -->
+    <div class="col-12 col-lg-7">
+        <div class="tech-card h-100 mb-0">
+            <div class="tech-card-header">
+                <h5 class="tech-card-title">Configuración de Respaldos Automáticos y Retención</h5>
+                <span class="@(cfg.AutomaticosActivos ? "tech-badge-ok" : "tech-badge-warn")">
+                    @(cfg.AutomaticosActivos ? "Activos en Segundo Plano" : "Desactivados")
+                </span>
+            </div>
+
+            <form asp-action="GuardarConfiguracionRespaldos" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@cfg.Id" />
+
+                <div class="row g-2 mb-3">
+                    <div class="col-12 col-md-4 d-flex align-items-center">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="chkAuto" name="AutomaticosActivos" value="true" checked="@cfg.AutomaticosActivos" />
+                            <label class="form-check-label fw-semibold" for="chkAuto">Respaldos Automáticos</label>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Frecuencia</label>
+                        <select name="Frecuencia" class="form-select form-select-sm">
+                            <option value="@FrecuenciaRespaldo.Desactivado" selected="@(cfg.Frecuencia == FrecuenciaRespaldo.Desactivado)">Desactivados</option>
+                            <option value="@FrecuenciaRespaldo.Cada30Minutos" selected="@(cfg.Frecuencia == FrecuenciaRespaldo.Cada30Minutos)">Cada 30 minutos</option>
+                            <option value="@FrecuenciaRespaldo.Cada1Hora" selected="@(cfg.Frecuencia == FrecuenciaRespaldo.Cada1Hora)">Cada 1 hora</option>
+                            <option value="@FrecuenciaRespaldo.Cada2Horas" selected="@(cfg.Frecuencia == FrecuenciaRespaldo.Cada2Horas)">Cada 2 horas (Recomendado)</option>
+                            <option value="@FrecuenciaRespaldo.Cada4Horas" selected="@(cfg.Frecuencia == FrecuenciaRespaldo.Cada4Horas)">Cada 4 horas</option>
+                            <option value="@FrecuenciaRespaldo.Cada6Horas" selected="@(cfg.Frecuencia == FrecuenciaRespaldo.Cada6Horas)">Cada 6 horas</option>
+                            <option value="@FrecuenciaRespaldo.Cada12Horas" selected="@(cfg.Frecuencia == FrecuenciaRespaldo.Cada12Horas)">Cada 12 horas</option>
+                            <option value="@FrecuenciaRespaldo.Diario" selected="@(cfg.Frecuencia == FrecuenciaRespaldo.Diario)">Una vez al día</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Hora Respaldo Diario</label>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-text">
+                                <input class="form-check-input mt-0" type="checkbox" name="RespaldoDiarioActivo" value="true" checked="@cfg.RespaldoDiarioActivo" title="Activar respaldo diario al finalizar jornada" />
+                            </div>
+                            <input type="time" name="HoraRespaldoDiario" value="@cfg.HoraRespaldoDiario" class="form-control" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small text-muted text-uppercase fw-semibold">Carpeta de Destino (fuera de Program Files)</label>
+                    <input type="text" name="CarpetaDestino" value="@cfg.CarpetaDestino" class="form-control form-control-sm font-monospace" required />
+                </div>
+
+                <div class="tech-subpanel mb-3">
+                    <div class="small fw-bold text-dark mb-2">Política de Retención (Conservación Inteligente)</div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small text-muted mb-1">Horarios</label>
+                            <input type="number" name="RetenerHorarios" value="@cfg.RetenerHorarios" min="1" max="200" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small text-muted mb-1">Diarios</label>
+                            <input type="number" name="RetenerDiarios" value="@cfg.RetenerDiarios" min="1" max="90" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small text-muted mb-1">Semanales</label>
+                            <input type="number" name="RetenerSemanales" value="@cfg.RetenerSemanales" min="1" max="52" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small text-muted mb-1">Mensuales</label>
+                            <input type="number" name="RetenerMensuales" value="@cfg.RetenerMensuales" min="1" max="36" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small text-muted mb-1">Retención máx. (días)</label>
+                            <input type="number" name="RetencionDias" value="@cfg.RetencionDias" min="1" max="3650" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-12 col-md-8 d-flex flex-wrap gap-3 pt-3">
+                            <label class="form-check-label small"><input type="checkbox" class="form-check-input me-1" name="ConservarDiarios" value="true" checked="@cfg.ConservarDiarios" /> Conservar diarios</label>
+                            <label class="form-check-label small"><input type="checkbox" class="form-check-input me-1" name="ConservarSemanales" value="true" checked="@cfg.ConservarSemanales" /> Conservar semanales</label>
+                            <label class="form-check-label small"><input type="checkbox" class="form-check-input me-1" name="ConservarMensuales" value="true" checked="@cfg.ConservarMensuales" /> Conservar mensuales</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="small text-muted">Si la PC se apaga, el respaldo pendiente se ejecuta automáticamente al iniciar.</span>
+                    <button type="submit" class="btn btn-tech btn-sm">Guardar Configuración</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Historial de Respaldos con Restauración y Eliminación Segura -->
+<div class="tech-card">
+    <div class="tech-card-header">
+        <div>
+            <h5 class="tech-card-title">Historial de Respaldos en @Model.RutaRespaldos (@Model.Respaldos.Count)</h5>
+            <div class="small text-muted">Nunca se permite eliminar el último respaldo válido. Toda restauración crea respaldo previo <code>PRE_RESTORE</code> y registra el evento en Historial de Mantenimiento.</div>
+        </div>
+    </div>
+
+    @if (Model.Respaldos.Any())
+    {
+        <div class="table-responsive">
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>Archivo</th>
+                        <th>Tipo</th>
+                        <th>Fecha y Hora</th>
+                        <th>Tamaño</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model.Respaldos)
+                    {
+                        <tr>
+                            <td class="font-monospace fw-semibold text-dark">@b.FileName</td>
+                            <td>
+                                <span class="@(b.EsPreventivo ? "tech-badge-info" : "badge bg-light text-dark border")">@b.TipoOrigen</span>
+                            </td>
+                            <td class="text-muted text-nowrap">@b.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td>@TechAdminService.FormatBytes(b.SizeInBytes)</td>
+                            <td>
+                                <span class="@(b.Estado == "Válido" ? "tech-badge-ok" : "tech-badge-warn")">@b.Estado</span>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-warning text-dark fw-semibold me-1"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#restoreModal"
+                                        data-filename="@b.FileName">
+                                    Restaurar
+                                </button>
+                                @if (!b.EsUltimoValido)
+                                {
+                                    <form asp-action="EliminarRespaldo" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar el respaldo antiguo @b.FileName?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="fileName" value="@b.FileName" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="small text-muted" title="Último respaldo válido protegido">Protegido</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-muted small">No se encontraron archivos <code>.db</code> en @Model.RutaRespaldos.</div>
+    }
+</div>
+
+@if (Model.ErroresRespaldosRecientes.Any())
+{
+    <div class="tech-card">
+        <div class="tech-card-header">
+            <h5 class="tech-card-title text-danger">Errores Recientes de Respaldos</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="tech-table">
+                <thead><tr><th>Fecha</th><th>Origen</th><th>Detalle</th></tr></thead>
+                <tbody>
+                    @foreach (var err in Model.ErroresRespaldosRecientes)
+                    {
+                        <tr>
+                            <td class="text-muted text-nowrap">@err.FechaEventoLocal.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td class="font-monospace small">@err.Origen</td>
+                            <td class="text-danger small">@err.Mensaje</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- Modal de Confirmación Explícita de Restauración (8 pasos) -->
+<div class="modal fade" id="restoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-warning">
+            <div class="modal-header bg-warning bg-opacity-10">
+                <h5 class="modal-title fw-bold text-dark">Confirmar Restauración Segura de SQLite</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="RestaurarRespaldo" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="fileName" id="restoreFileNameInput" />
+                    <p class="small mb-2">Se restaurará la base de datos activa desde:</p>
+                    <div class="tech-code d-block py-2 px-3 mb-3" id="restoreFileNameLabel"></div>
+
+                    <div class="alert alert-warning small py-2">
+                        <strong>Procedimiento automático de seguridad:</strong>
+                        <ol class="mb-0 ps-3 mt-1">
+                            <li>Verificación de integridad del respaldo seleccionado.</li>
+                            <li>Creación de respaldo preventivo <code>PRE_RESTORE</code> del estado actual.</li>
+                            <li>Cierre limpio de conexiones SQLite y restauración atómica.</li>
+                            <li>Reinicialización, comprobación de consulta y registro en Historial de Mantenimiento.</li>
+                        </ol>
+                    </div>
+
+                    <label class="form-label small text-muted text-uppercase fw-semibold">
+                        Escriba <strong class="text-danger">RESTAURAR</strong> para confirmar:
+                    </label>
+                    <input type="text" name="confirmText" class="form-control font-monospace" required autocomplete="off" placeholder="RESTAURAR" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-tech-outline btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning btn-sm fw-bold text-dark">Ejecutar Restauración Segura</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const restoreModal = document.getElementById('restoreModal');
+        if (restoreModal) {
+            restoreModal.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                const fileName = btn.getAttribute('data-filename');
+                document.getElementById('restoreFileNameInput').value = fileName;
+                document.getElementById('restoreFileNameLabel').textContent = fileName;
+            });
+        }
+    </script>
+}

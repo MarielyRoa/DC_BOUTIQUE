@@ -12,10 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\DC_BOUTIQUE.DOMAIN\DC_BOUTIQUE.Core.Domain.csproj" />
     <ProjectReference Include="..\DC_BOUTIQUE.APPLICATION\DC_BOUTIQUE.Core.Application.csproj" />
   </ItemGroup>

@@ -6,14 +6,14 @@ namespace DC_BOUTIQUE.Infrastructure.Identity.Seeds
     {
         public static async Task SeedAsync(RoleManager<IdentityRole> roleManager)
         {
+            if (!await roleManager.RoleExistsAsync("Desarrollador"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Desarrollador"));
+            }
+
             if (!await roleManager.RoleExistsAsync("Administrador"))
             {
                 await roleManager.CreateAsync(new IdentityRole("Administrador"));
-            }
-
-            if (!await roleManager.RoleExistsAsync("Vendedor"))
-            {
-                await roleManager.CreateAsync(new IdentityRole("Vendedor"));
             }
 
             if (!await roleManager.RoleExistsAsync("Cajero"))

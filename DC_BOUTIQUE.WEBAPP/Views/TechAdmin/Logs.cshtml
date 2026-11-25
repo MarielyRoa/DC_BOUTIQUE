@@ -1,0 +1,215 @@
+@model DC_BOUTIQUE.Core.Application.DTOs.TechAdmin.TechLogsFilterDto
+@using DC_BOUTIQUE.Core.Domain.Common.Enums
+@{
+    Layout = "_TechLayout";
+    ViewData["Title"] = "Logs y Errores del Sistema";
+    string? desdeStr = Model.Desde?.ToString("yyyy-MM-dd");
+    string? hastaStr = Model.Hasta?.ToString("yyyy-MM-dd");
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark">Logs y Errores del Sistema</h4>
+        <div class="text-muted small">
+            Excepciones, SQLite, ventas, impresión, respaldos, restauración y autenticación · <span class="text-success fw-semibold">Sin contraseñas, tokens ni hashes</span>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-warning text-dark btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#purgeLogsModal">
+            Limpiar Logs Antiguos
+        </button>
+        <a asp-action="ExportarLogs" asp-route-format="csv" asp-route-desde="@desdeStr" asp-route-hasta="@hastaStr" asp-route-tipo="@Model.Tipo" asp-route-severidad="@Model.Severidad" asp-route-busqueda="@Model.Busqueda" class="btn btn-tech-outline btn-sm">
+            Exportar CSV
+        </a>
+        <a asp-action="ExportarLogs" asp-route-format="json" asp-route-desde="@desdeStr" asp-route-hasta="@hastaStr" asp-route-tipo="@Model.Tipo" asp-route-severidad="@Model.Severidad" asp-route-busqueda="@Model.Busqueda" class="btn btn-tech btn-sm">
+            Exportar JSON
+        </a>
+    </div>
+</div>
+
+<!-- Filtros Rápidos por Categoría -->
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-action="Logs" class="btn btn-sm @(Model.Tipo == null ? "btn-tech" : "btn-tech-outline")">Todos (@Model.TotalLogsAlmacenados)</a>
+    <a asp-action="Logs" asp-route-tipo="@TipoLogTecnico.Excepcion" class="btn btn-sm @(Model.Tipo == TipoLogTecnico.Excepcion ? "btn-tech" : "btn-tech-outline")">Excepciones</a>
+    <a asp-action="Logs" asp-route-tipo="@TipoLogTecnico.Persistencia" class="btn btn-sm @(Model.Tipo == TipoLogTecnico.Persistencia ? "btn-tech" : "btn-tech-outline")">SQLite / Persistencia</a>
+    <a asp-action="Logs" asp-route-tipo="@TipoLogTecnico.Ventas" class="btn btn-sm @(Model.Tipo == TipoLogTecnico.Ventas ? "btn-tech" : "btn-tech-outline")">Ventas</a>
+    <a asp-action="Logs" asp-route-tipo="@TipoLogTecnico.Impresion" class="btn btn-sm @(Model.Tipo == TipoLogTecnico.Impresion ? "btn-tech" : "btn-tech-outline")">Impresión</a>
+    <a asp-action="Logs" asp-route-tipo="@TipoLogTecnico.Respaldos" class="btn btn-sm @(Model.Tipo == TipoLogTecnico.Respaldos ? "btn-tech" : "btn-tech-outline")">Respaldos</a>
+    <a asp-action="Logs" asp-route-tipo="@TipoLogTecnico.Restauracion" class="btn btn-sm @(Model.Tipo == TipoLogTecnico.Restauracion ? "btn-tech" : "btn-tech-outline")">Restauración</a>
+    <a asp-action="Logs" asp-route-tipo="@TipoLogTecnico.Autenticacion" class="btn btn-sm @(Model.Tipo == TipoLogTecnico.Autenticacion ? "btn-tech" : "btn-tech-outline")">Autenticación</a>
+</div>
+
+<!-- Filtros Avanzados y Búsqueda -->
+<div class="tech-card">
+    <form asp-action="Logs" method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-muted text-uppercase fw-semibold">Buscar texto</label>
+            <input type="text" name="busqueda" value="@Model.Busqueda" class="form-control" placeholder="Mensaje, origen, usuario..." />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted text-uppercase fw-semibold">Desde</label>
+            <input type="date" name="desde" value="@desdeStr" class="form-control" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted text-uppercase fw-semibold">Hasta</label>
+            <input type="date" name="hasta" value="@hastaStr" class="form-control" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted text-uppercase fw-semibold">Categoría</label>
+            <select name="tipo" class="form-select">
+                <option value="">Todas</option>
+                @foreach (TipoLogTecnico t in Enum.GetValues(typeof(TipoLogTecnico)))
+                {
+                    <option value="@t" selected="@(Model.Tipo == t)">@t</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-md-1">
+            <label class="form-label small text-muted text-uppercase fw-semibold">Nivel</label>
+            <select name="severidad" class="form-select">
+                <option value="">Todos</option>
+                <option value="Info" selected="@(Model.Severidad == "Info")">Info</option>
+                <option value="Warning" selected="@(Model.Severidad == "Warning")">Warning</option>
+                <option value="Error" selected="@(Model.Severidad == "Error")">Error</option>
+                <option value="Critical" selected="@(Model.Severidad == "Critical")">Critical</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-tech w-100">Buscar</button>
+            <a asp-action="Logs" class="btn btn-tech-outline">Limpiar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabla de Logs -->
+<div class="tech-card">
+    <div class="tech-card-header">
+        <h5 class="tech-card-title">Eventos Registrados (@Model.Logs.Count)</h5>
+    </div>
+
+    @if (Model.Logs.Any())
+    {
+        <div class="table-responsive">
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Categoría</th>
+                        <th>Severidad</th>
+                        <th>Origen</th>
+                        <th>Usuario</th>
+                        <th>Mensaje y Detalle de Excepción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model.Logs)
+                    {
+                        var sevClass = log.Severidad switch
+                        {
+                            "Critical" => "tech-badge-err",
+                            "Error" => "tech-badge-err",
+                            "Warning" => "tech-badge-warn",
+                            _ => "tech-badge-info"
+                        };
+                        <tr>
+                            <td class="text-muted text-nowrap">@log.FechaEventoLocal.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td><span class="tech-code">@log.Tipo</span></td>
+                            <td><span class="@sevClass">@log.Severidad</span></td>
+                            <td class="small text-primary font-monospace">@log.Origen</td>
+                            <td class="small text-muted">@(string.IsNullOrWhiteSpace(log.UsuarioRelacionado) ? "—" : log.UsuarioRelacionado)</td>
+                            <td>
+                                <div class="text-dark fw-semibold">@log.Mensaje</div>
+                                @if (!string.IsNullOrWhiteSpace(log.DetalleTecnico))
+                                {
+                                    <details class="mt-1">
+                                        <summary class="small text-primary" style="cursor: pointer;">Ver detalle técnico sanitizado</summary>
+                                        <pre class="tech-code mt-1 p-2 mb-0" style="white-space: pre-wrap; max-height: 180px; overflow-y: auto;">@log.DetalleTecnico</pre>
+                                    </details>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-muted small">No se encontraron registros con los filtros seleccionados.</div>
+    }
+</div>
+
+<!-- Operaciones Técnicas Importantes (Auditoría) -->
+<div class="tech-card">
+    <div class="tech-card-header">
+        <h5 class="tech-card-title">Operaciones Técnicas Auditadas (@Model.Auditorias.Count)</h5>
+    </div>
+
+    @if (Model.Auditorias.Any())
+    {
+        <div class="table-responsive">
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Módulo</th>
+                        <th>Operación</th>
+                        <th>Resultado</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model.Auditorias)
+                    {
+                        <tr>
+                            <td class="text-muted text-nowrap">@a.FechaAccionLocal.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td class="font-monospace text-primary fw-semibold">@a.UsuarioTecnico</td>
+                            <td>@a.Modulo</td>
+                            <td class="text-dark fw-semibold">@a.Accion</td>
+                            <td><span class="@(a.Exitosa ? "tech-badge-ok" : "tech-badge-err")">@(a.Exitosa ? "OK" : "Error")</span></td>
+                            <td class="text-muted small">@a.Detalle</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-muted small">Sin operaciones auditadas aún.</div>
+    }
+</div>
+
+<!-- Modal Confirmado para Limpieza de Logs Antiguos -->
+<div class="modal fade" id="purgeLogsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-warning">
+            <div class="modal-header bg-warning bg-opacity-10">
+                <h5 class="modal-title fw-bold">Confirmar Limpieza de Logs Antiguos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="LimpiarLogsAntiguos" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <p class="small text-muted">Se eliminarán únicamente registros de log antiguos. La bitácora de auditoría y el historial de mantenimiento se conservan intactos.</p>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Antigüedad a depurar</label>
+                        <select name="diasAntiguedad" class="form-select">
+                            <option value="30">Más de 30 días</option>
+                            <option value="60">Más de 60 días</option>
+                            <option value="90">Más de 90 días</option>
+                            <option value="7">Más de 7 días</option>
+                        </select>
+                    </div>
+                    <label class="form-label small text-muted text-uppercase fw-semibold">Escriba <strong class="text-danger">LIMPIAR</strong> para confirmar:</label>
+                    <input type="text" name="confirmText" class="form-control font-monospace" required autocomplete="off" placeholder="LIMPIAR" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-tech-outline btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning btn-sm fw-bold text-dark">Ejecutar Limpieza</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -23,7 +23,7 @@ namespace DC_BOUTIQUE.Infrastructure.Identity.Seeds
                 var result = await userManager.CreateAsync(defaultUser, "Caja1234$");
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(defaultUser, "Vendedor");
+                    await userManager.AddToRoleAsync(defaultUser, "Cajero");
                 }
             }
         }

@@ -10,5 +10,8 @@ namespace DC_BOUTIQUE.Core.Application.Interfaces
         Task<Result> CambiarPasswordAsync(Guid usuarioId, string passwordActual, string nuevoPassword, CancellationToken cancellationToken = default);
         Task<Result> ActivarAsync(Guid id, CancellationToken cancellationToken = default);
         Task<Result> HardDeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> ExisteDesarrolladorAsync(CancellationToken cancellationToken = default);
+        Task<Result<UsuarioDto>> CrearDesarrolladorInicialAsync(SaveUsuarioDto dto, CancellationToken cancellationToken = default);
+        Task<Result> ResetPasswordByTechAsync(Guid usuarioId, string nuevoPassword, CancellationToken cancellationToken = default);
     }
 }

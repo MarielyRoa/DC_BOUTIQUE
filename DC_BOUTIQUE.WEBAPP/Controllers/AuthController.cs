@@ -11,23 +11,49 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
     {
         private readonly IAccountService _accountService;
         private readonly IUsuarioService _usuarioService;
+        private readonly ITechAdminService _techService;
 
-        public AuthController(IAccountService accountService, IUsuarioService usuarioService)
+        public AuthController(
+            IAccountService accountService,
+            IUsuarioService usuarioService,
+            ITechAdminService techService)
         {
             _accountService = accountService;
             _usuarioService = usuarioService;
+            _techService = techService;
         }
 
         [HttpGet]
-        public IActionResult Login()
+        public async Task<IActionResult> Login()
         {
+            await LoadActiveLoginUsersAsync();
             return View(new LoginViewModel());
+        }
+
+        private async Task LoadActiveLoginUsersAsync()
+        {
+            try
+            {
+                var usuarios = await _usuarioService.GetAllAsync();
+                // Mostrar únicamente personal activo de la boutique (mantener oculto el rol Desarrollador)
+                ViewBag.UsuariosDisponibles = usuarios
+                    .Where(u => u.Activo && u.Rol != Core.Domain.Common.Enums.RolUsuario.Desarrollador)
+                    .OrderByDescending(u => u.EsPrincipal)
+                    .ThenBy(u => u.Rol)
+                    .ThenBy(u => u.NombreCompleto)
+                    .ToList();
+            }
+            catch
+            {
+                ViewBag.UsuariosDisponibles = new List<UsuarioDto>();
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
+            await LoadActiveLoginUsersAsync();
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values
@@ -54,18 +80,31 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
                     if (domainUser == null)
                     {
                         var userExists = await _usuarioService.GetByNombreUsuarioAsync(model.Username.Trim());
+                        string motivoFallo;
                         if (userExists == null)
                         {
+                            motivoFallo = "Intento de acceso con usuario no registrado.";
                             ModelState.AddModelError("", "Usuario no identificado o no registrado en el sistema.");
                         }
                         else if (!userExists.Activo)
                         {
+                            motivoFallo = "Intento de acceso con usuario inactivo.";
                             ModelState.AddModelError("", "Este usuario se encuentra inactivo. Contacte al administrador.");
                         }
                         else
                         {
+                            motivoFallo = "Credenciales inválidas (contraseña o PIN incorrecto).";
                             ModelState.AddModelError("", "Contraseña o PIN incorrecto.");
                         }
+
+                        // Registrar fallo de autenticación SIN revelar contraseñas ni credenciales
+                        await _techService.LogEventAsync(
+                            Core.Domain.Common.Enums.TipoLogTecnico.Autenticacion,
+                            "Warning",
+                            "AuthController.Login",
+                            motivoFallo,
+                            $"IP remota: {HttpContext.Connection.RemoteIpAddress}",
+                            model.Username.Trim());
                         return View(model);
                     }
 
@@ -92,8 +131,14 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
                     HttpContext.Session.SetString("UserId", domainUser.Id.ToString());
                     HttpContext.Session.SetString("UserName", domainUser.NombreUsuario);
                     HttpContext.Session.SetString("UserRole", domainUser.Rol.ToString());
+                    await _techService.RegisterUserLastAccessAsync(domainUser.Id);
 
                     TempData["SuccessMessage"] = $"¡Bienvenida, {domainUser.NombreCompleto}!";
+                    if (domainUser.Rol == Core.Domain.Common.Enums.RolUsuario.Desarrollador)
+                    {
+                        await _techService.RecordAuditAsync(domainUser.NombreUsuario, "Seguridad", "Inicio de Sesión Técnico", true, "Acceso autenticado al Centro de Administración Técnica.");
+                        return RedirectToAction("Index", "TechAdmin");
+                    }
                     return domainUser.Rol == Core.Domain.Common.Enums.RolUsuario.Vendedor
                         ? RedirectToAction("Index", "Pos")
                         : RedirectToAction("Index", "Admin");
@@ -136,8 +181,15 @@ namespace DC_BOUTIQUE.WEBAPP.Controllers
                 HttpContext.Session.SetString("UserId", identityUserVm.Id.ToString());
                 HttpContext.Session.SetString("UserName", identityUserVm.NombreUsuario);
                 HttpContext.Session.SetString("UserRole", activeRole.ToString());
+                await _techService.RegisterUserLastAccessAsync(identityUserVm.Id);
 
                 TempData["SuccessMessage"] = $"¡Bienvenida, {identityUserVm.NombreCompleto}!";
+
+                if (activeRole == Core.Domain.Common.Enums.RolUsuario.Desarrollador)
+                {
+                    await _techService.RecordAuditAsync(identityUserVm.NombreUsuario, "Seguridad", "Inicio de Sesión Técnico", true, "Acceso autenticado vía Identity al Centro de Administración Técnica.");
+                    return RedirectToAction("Index", "TechAdmin");
+                }
 
                 if (activeRole == Core.Domain.Common.Enums.RolUsuario.Vendedor)
                 {

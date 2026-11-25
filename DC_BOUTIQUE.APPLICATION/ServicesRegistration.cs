@@ -16,6 +16,7 @@ namespace DC_BOUTIQUE.Core.Application
             services.AddScoped<ICajaService, CajaService>();
             services.AddScoped<IVentaService, VentaService>();
             services.AddScoped<IInventarioService, InventarioService>();
+            services.AddScoped<ITechAdminService, TechAdminService>();
             #endregion
 
             return services;
